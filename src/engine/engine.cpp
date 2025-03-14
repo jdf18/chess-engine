@@ -4,6 +4,8 @@
 // There will be quite a few different bitboards, containing useful information.
 // The least significant bit is the square a1. The next least significant is b1, so on and so forth. The ninth least significant will be a2.
 // And the most significant is h8.
+// This means that a left shift of 1 corresponds to moving right one square, and a right shift of 1 corresponds to moving left one square.
+// A left shift of 8 corresponds to moving up one square, and a right shift of 8 corresponds to moving down one square.
 // Bitboard list:
 // pieces : Has a bit where all pieces on the board are.
 // pieces_w : Has a bit where all white pieces are.
@@ -45,4 +47,40 @@ uint64_t valid_knight_moves(uint64_t square, uint64_t pieces_col) {
 	allsquares |= square << 15;
 	allsquares |= square << 17;
 	return allsquares & ~pieces_col;
+}
+
+// Returns all the valid movs for a pawn on 'square' to move to, given 'pieces',
+// which is the position of all pieces, and 'pieces_col', the position of
+// all pieces of the same colour as the pawn.
+// This does factor in the pawn making a double move if it's on the second rank.
+// It requires a boolean for the colour. 1 for white and 0 for black.
+uint64_t valid_pawn_moves(uint64_t square, uint64_t pieces, uint64_t pieces_col, bool colour) {
+	// In the case that the pawn is white, it moves two squares if on the second rank.
+	// The direction it moves is also different.
+	// I don't think this can be written without the branch on colour, but the second branch (checking if it's on the second rank) could maybe
+	// be removed with some bit manipulation wizardry.
+	if (colour) {
+		uint64_t allsquares = 0;
+		// Check if the pawn is on the second rank
+		if ((square & (255 << 8)) > 0) {
+			// Add the two squares the pawn could move to in theory
+			allsquares |= square << 8;
+			allsquares |= square << 16;
+			// Remove squares occupied by pieces
+			allsquares &= ~pieces;
+			// This is potentially incorrect, but I think it should work.
+			// We XOR the spaces occupied by other pieces with the space the pawn is on, so it doesn't interfere.
+			// We then take these spaces and move them all up one square (by left shifting by 8).
+			// We can then bitwise and allsquares with NOT of this.
+			// This should take care of the case where there is a piece directly in front of the pawn, but not the square after that.
+			allsquares &= ~((pieces ^ square) << 8);
+		}
+		else {
+			allsquares |= square << 8;
+			allsquares &= pieces;
+		}
+		allsquares |= square << 7;
+		allsquares |= square << 9;
+		allsquares &= ~pieces;
+	}
 }
