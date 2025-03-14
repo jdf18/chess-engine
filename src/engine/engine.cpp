@@ -37,6 +37,7 @@ bool piece_on_squares(uint64_t squares, uint64_t pieces) {
 // Returns all the valid squares for a knight on 'square' to move to, given 'pieces_col',
 // which is the position of all pieces of the same colour as the knight.
 uint64_t valid_knight_moves(uint64_t square, uint64_t pieces_col) {
+	uint64_t white_square_mask = 0x55AA55AA55AA55AA;
 	uint64_t allsquares = 0;
 	allsquares |= square >> 10;
 	allsquares |= square >> 6;
@@ -46,7 +47,7 @@ uint64_t valid_knight_moves(uint64_t square, uint64_t pieces_col) {
 	allsquares |= square << 10;
 	allsquares |= square << 15;
 	allsquares |= square << 17;
-	return allsquares & ~pieces_col;
+	return allsquares & ~pieces_col & (((square & white_square_mask) > 0) ? ~white_square_mask : white_square_mask);
 }
 
 // Returns all the valid movs for a pawn on 'square' to move to, given 'pieces',
