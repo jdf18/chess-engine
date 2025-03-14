@@ -31,5 +31,8 @@
 *.out
 *.app
 
-#CMake
+# CMake
 CMakeLists.txt
+
+# vs
+.vs
