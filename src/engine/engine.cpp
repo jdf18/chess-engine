@@ -42,10 +42,10 @@ uint64_t valid_knight_moves(uint64_t square, uint64_t pieces_col) {
 	allsquares |= square >> 6;
 	allsquares |= square >> 15;
 	allsquares |= square >> 17;
-	allsquares |= (square & (UINT64_MAX >> 6)) << 6;
-	allsquares |= (square & (UINT64_MAX >> 10)) << 10;
-	allsquares |= (square & (UINT64_MAX >> 15)) << 15;
-	allsquares |= (square & (UINT64_MAX >> 17)) << 17;
+	allsquares |= square << 6;
+	allsquares |= square << 10;
+	allsquares |= square << 15;
+	allsquares |= square << 17;
 	return allsquares & ~pieces_col;
 }
 
@@ -73,10 +73,10 @@ uint64_t valid_pawn_moves(uint64_t square, uint64_t pieces, uint64_t pieces_col,
 			// We then take these spaces and move them all up one square (by left shifting by 8).
 			// We can then bitwise AND allsquares with NOT of this.
 			// This should take care of the case where there is a piece directly in front of the pawn, but not the square after that.
-			allsquares &= ~(((pieces ^ square) & (UINT64_MAX >> 8)) << 8);
+			allsquares &= ~((pieces ^ square) << 8);
 		}
 		else {
-			allsquares |= (square & (UINT64_MAX >> 8)) << 8;
+			allsquares |= square << 8;
 			allsquares &= pieces;
 		}
 		allsquares |= square << 7;
