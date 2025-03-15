@@ -31,8 +31,7 @@
 *.out
 *.app
 
-# CMake
-CMakeLists.txt
-
 # vs
 .vs
+
+build/
