@@ -7,4 +7,4 @@ ENDIF()
 
 project(Engine)
 
-add_executable(Engine src/engine/engine.cpp)
+add_executable(Engine src/engine/engine.cpp src/engine/boardstate.cpp)
