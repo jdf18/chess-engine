@@ -1,5 +1,12 @@
 #include <cstdint>
 
+#define ROW 8
+#define COL 1
+#define LEFT_COL_MASK 0x0101010101010101
+#define RIGHT_COL_MASK 0x8080808080808080
+#define WHITE_SQUARE_MASK 0x55AA55AA55AA55AA
+#define BLACK_SQUARE_MASK ~WHITE_SQUARE_MASK
+
 // bitboards: 64 bit unsigned integers, with 1 bit for each square of the board.
 // There will be quite a few different bitboards, containing useful information.
 // The least significant bit is the square a1. The next least significant is b1, so on and so forth. The ninth least significant will be a2.
@@ -37,17 +44,16 @@ bool piece_on_squares(uint64_t squares, uint64_t pieces) {
 // Returns all the valid squares for a knight on 'square' to move to, given 'pieces_col',
 // which is the position of all pieces of the same colour as the knight.
 uint64_t valid_knight_moves(uint64_t square, uint64_t pieces_col) {
-	uint64_t white_square_mask = 0x55AA55AA55AA55AA;
 	uint64_t allsquares = 0;
-	allsquares |= square >> 10;
-	allsquares |= square >> 6;
-	allsquares |= square >> 15;
-	allsquares |= square >> 17;
-	allsquares |= square << 6;
-	allsquares |= square << 10;
-	allsquares |= square << 15;
-	allsquares |= square << 17;
-	return allsquares & ~pieces_col & (((square & white_square_mask) > 0) ? ~white_square_mask : white_square_mask);
+	allsquares |= square >> (ROW + 2 * COL);
+	allsquares |= square >> (ROW - 2 * COL);
+	allsquares |= square >> (2 * ROW - COL);
+	allsquares |= square >> (2 * ROW + COL);
+	allsquares |= square << (ROW - 2 * COL);
+	allsquares |= square << (ROW + 2 * COL);
+	allsquares |= square << (2 * ROW - COL);
+	allsquares |= square << (2 * ROW + COL);
+	return allsquares & ~pieces_col & (((square & WHITE_SQUARE_MASK) > 0) ? BLACK_SQUARE_MASK : WHITE_SQUARE_MASK);
 }
 
 // Returns all the valid movs for a pawn on 'square' to move to, given 'pieces',
@@ -55,7 +61,7 @@ uint64_t valid_knight_moves(uint64_t square, uint64_t pieces_col) {
 // all pieces of the same colour as the pawn.
 // This does factor in the pawn making a double move if it's on the second rank.
 // It requires a boolean for the colour. True for white and False for black.
-uint64_t valid_pawn_moves(uint64_t square, uint64_t pieces, uint64_t pieces_col, bool white) {
+uint64_t valid_pawn_moves(uint64_t square, uint64_t pieces, uint64_t pieces_col, uint64_t pieces_opposite_col, bool white) {
 	// In the case that the pawn is white, it moves two squares if on the second rank.
 	// The direction it moves is also different.
 	// I don't think this can be written without the branch on colour, but the second branch (checking if it's on the second rank) could maybe
@@ -64,10 +70,10 @@ uint64_t valid_pawn_moves(uint64_t square, uint64_t pieces, uint64_t pieces_col,
 
 	if (white) {
 		// Check if the pawn is on the second rank
-		if ((square & (255 << 8)) > 0) {
+		if ((square & (0xFF << ROW)) > 0) {
 			// Add the two squares the pawn could move to in theory
-			allsquares |= square << 8;
-			allsquares |= square << 16;
+			allsquares |= square << ROW;
+			allsquares |= square << (2 * ROW);
 			// Remove squares occupied by pieces
 			allsquares &= ~pieces;
 			// This is potentially incorrect, but I think it should work.
@@ -75,43 +81,41 @@ uint64_t valid_pawn_moves(uint64_t square, uint64_t pieces, uint64_t pieces_col,
 			// We then take these spaces and move them all up one square (by left shifting by 8).
 			// We can then bitwise AND allsquares with NOT of this.
 			// This should take care of the case where there is a piece directly in front of the pawn, but not the square after that.
-			allsquares &= ~((pieces ^ square) << 8);
+			allsquares &= ~((pieces ^ square) << ROW);
 		}
 		else {
-			allsquares |= square << 8;
+			allsquares |= square << ROW;
 			allsquares &= ~pieces;
 		}
-		allsquares |= square << 7;
-		allsquares |= square << 9;
+		allsquares |= ((square << (ROW - COL)) | (square << (ROW + COL))) & pieces_opposite_col;
 		allsquares &= ~pieces_col;
 	}
 	else {
 		// Check if the pawn is on the seventh rank
-		if ((square & (255 << 48)) > 0) {
+		if ((square & (0xFF << (6 * ROW))) > 0) {
 			// Add the two squares the pawn could move to in theory
-			allsquares |= square >> 8;
-			allsquares |= square >> 16;
+			allsquares |= square >> ROW;
+			allsquares |= square >> (2 * ROW);
 			// Remove squares occupied by pieces
 			allsquares &= ~pieces;
 			// This should take care of the case where there is a piece directly in front of the pawn, but not the square after that.
 			// Same reasoning as for the white case.
-			allsquares &= ~((pieces ^ square) >> 8);
+			allsquares &= ~((pieces ^ square) >> ROW);
 		}
 		else {
-			allsquares |= square >> 8;
+			allsquares |= square >> ROW;
 			allsquares &= ~pieces;
 		}
-		allsquares |= square >> 7;
-		allsquares |= square >> 9;
+		allsquares |= ((square >> (ROW - COL)) | (square >> (ROW + COL))) & pieces_opposite_col;
 		allsquares &= ~pieces_col;
 		
 	}
 
-	if ((square & 0x0101010101010101) > 0) {
-		allsquares &= ~0x8080808080808080;
+	if ((square & LEFT_COL_MASK) > 0) {
+		allsquares &= ~RIGHT_COL_MASK;
 	}
-	else if ((square & 0x8080808080808080) > 0) {
-		allsquares &= ~0x0101010101010101;
+	else if ((square & RIGHT_COL_MASK) > 0) {
+		allsquares &= ~LEFT_COL_MASK;
 	}
 
 	return allsquares;
