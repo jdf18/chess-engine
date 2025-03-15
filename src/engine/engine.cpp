@@ -60,8 +60,9 @@ uint64_t valid_pawn_moves(uint64_t square, uint64_t pieces, uint64_t pieces_col,
 	// The direction it moves is also different.
 	// I don't think this can be written without the branch on colour, but the second branch (checking if it's on the second rank) could maybe
 	// be removed with some bit manipulation wizardry.
+	uint64_t allsquares = 0;
+
 	if (white) {
-		uint64_t allsquares = 0;
 		// Check if the pawn is on the second rank
 		if ((square & (255 << 8)) > 0) {
 			// Add the two squares the pawn could move to in theory
@@ -78,15 +79,13 @@ uint64_t valid_pawn_moves(uint64_t square, uint64_t pieces, uint64_t pieces_col,
 		}
 		else {
 			allsquares |= square << 8;
-			allsquares &= pieces;
+			allsquares &= ~pieces;
 		}
 		allsquares |= square << 7;
 		allsquares |= square << 9;
 		allsquares &= ~pieces_col;
-		return allsquares;
 	}
 	else {
-		uint64_t allsquares = 0;
 		// Check if the pawn is on the seventh rank
 		if ((square & (255 << 48)) > 0) {
 			// Add the two squares the pawn could move to in theory
@@ -100,11 +99,21 @@ uint64_t valid_pawn_moves(uint64_t square, uint64_t pieces, uint64_t pieces_col,
 		}
 		else {
 			allsquares |= square >> 8;
-			allsquares &= pieces;
+			allsquares &= ~pieces;
 		}
 		allsquares |= square >> 7;
 		allsquares |= square >> 9;
 		allsquares &= ~pieces_col;
-		return allsquares;
+		
 	}
+
+	if ((square & 0x0101010101010101) > 0) {
+		allsquares &= ~0x8080808080808080;
+	}
+	else if ((square & 0x8080808080808080) > 0) {
+		allsquares &= ~0x0101010101010101;
+	}
+
+	return allsquares;
+
 }
