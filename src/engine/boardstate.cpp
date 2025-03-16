@@ -79,12 +79,12 @@ std::unordered_map<uint64_t, uint64_t> get_diag_mask_ne() {
 	for (int i = 0; i < 64; i++) {
 		uint64_t diag = square;
 		uint64_t copy = square;
-		while (copy > 0) {
+		while (copy != 0) {
 			copy >>= BOARD_ROW + BOARD_COL;
 			diag |= copy;
 		}
 		copy = square;
-		while (copy > 0) {
+		while (copy != 0) {
 			copy <<= BOARD_ROW + BOARD_COL;
 			diag |= copy;
 		}
@@ -102,12 +102,12 @@ std::unordered_map<uint64_t, uint64_t> get_diag_mask_nw() {
 	for (int i = 0; i < 64; i++) {
 		uint64_t diag = square;
 		uint64_t copy = square;
-		while (copy > 0) {
+		while (copy != 0) {
 			copy >>= BOARD_ROW - BOARD_COL;
 			diag |= copy;
 		}
 		copy = square;
-		while (copy > 0) {
+		while (copy != 0) {
 			copy <<= BOARD_ROW - BOARD_COL;
 			diag |= copy;
 		}
@@ -116,6 +116,48 @@ std::unordered_map<uint64_t, uint64_t> get_diag_mask_nw() {
 		mask.insert({ square, diag });
 	}
 }
+
+// This function is unholy.
+std::unordered_map<uint16_t, uint8_t> get_rank_attacks() {
+	// Define the map and allocate required space
+	std::unordered_map<uint16_t, uint8_t> map = {};
+	map.rehash(8 * 256);
+	// This will go through all the squares on the rank
+	uint8_t square = 1;
+	while (square != 0) {
+		for (int i = 0; i < 256; i++) {
+			uint8_t occupancy = i;
+			// goLeft will move to the left of our square, until it meets an occupied square.
+			uint8_t goLeft = square >> 1;
+			uint8_t attacks = 0;
+			while ((goLeft != 0) && ((goLeft & occupancy) == 0)) {
+				attacks |= goLeft;
+				goLeft >>= 1;
+			}
+			
+			// Add the square that was occupied (This is the intended behaviour of the function).
+			attacks |= goLeft;
+
+			// goRight will move to the right of our square, until it meets an occupied square.
+			uint8_t goRight = square << 1;
+			while ((goRight != 0) && ((goRight & occupancy) == 0)) {
+				attacks |= goRight;
+				goRight <<= 1;
+			}
+
+			// Add the square that was occupied (This is the intended behaviour of the function).
+			attacks |= goRight;
+
+			// Create the key that will be used to look up (This is subject to change).
+			uint16_t key = 0;
+			*(uint8_t*)&key = square;
+			*(uint8_t*)(&key + 1) = occupancy;
+			map.insert({ key, attacks });
+		}
+	}
+	return map;
+}
+
 
 // Returns all the valid squares for a knight on 'square' to move to, given 'friendly_pieces',
 // which is the position of all pieces of the same colour as the knight.
