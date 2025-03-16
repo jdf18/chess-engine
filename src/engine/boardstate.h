@@ -1,4 +1,5 @@
 #include <cstdint>
+#include <unordered_map>
 
 #include "pieces.h"
 
@@ -17,15 +18,19 @@
 #define SEVENTH_RANK 0xFF000000000000
 #define EIGHTH_RANK 0xFF00000000000000
 
-#define FIRST_COL 0x0101010101010101
-#define SECOND_COL 0x0202020202020202
-#define THIRD_COL 0x0404040404040404
-#define FOURTH_COL 0x0808080808080808
-#define FIFTH_COL 0x1010101010101010
-#define SIXTH_COL 0x2020202020202020
-#define SEVENTH_COL 0x4040404040404040
-#define EIGHTH_COL 0x8080808080808080
+#define FIRST_FILE 0x0101010101010101
+#define SECOND_FILE 0x0202020202020202
+#define THIRD_FILE 0x0404040404040404
+#define FOURTH_FILE 0x0808080808080808
+#define FIFTH_FILE 0x1010101010101010
+#define SIXTH_FILE 0x2020202020202020
+#define SEVENTH_FILE 0x4040404040404040
+#define EIGHTH_FILE 0x8080808080808080
 
+std::unordered_map<uint64_t, uint64_t> get_file_mask();
+std::unordered_map<uint64_t, uint64_t> get_rank_mask();
+std::unordered_map<uint64_t, uint64_t> get_diag_mask_ne();
+std::unordered_map<uint64_t, uint64_t> get_diag_mask_nw();
 
 // bitboards: 64 bit unsigned integers, with 1 bit for each square of the board.
 //   There will be quite a few different bitboards, containing useful information.
@@ -80,3 +85,4 @@ struct BoardState {
     BitBoard pseudo_legal_bishop_moves(Colour colour);
     BitBoard pseudo_legal_pawn_moves(Colour colour);
 };
+

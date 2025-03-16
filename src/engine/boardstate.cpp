@@ -1,6 +1,162 @@
 #include "boardstate.h"
 
 #include <cstdint>
+#include <unordered_map>
+
+// Creates a hash table mapping every (individual) square to its rank
+std::unordered_map<uint64_t, uint64_t> get_rank_mask() {
+	std::unordered_map<uint64_t, uint64_t> mask = {};
+	mask.rehash(64);
+	uint64_t square = 1;
+	for (int i = 0; i < 64; i++) {
+		if ((square & FIRST_RANK) != 0) {
+			mask.insert({ square, FIRST_RANK });
+		}
+		else if ((square & SECOND_RANK) != 0) {
+			mask.insert({ square, SECOND_RANK });
+		}
+		else if ((square & THIRD_RANK) != 0) {
+			mask.insert({ square, THIRD_RANK });
+		}
+		else if ((square & FOURTH_RANK) != 0) {
+			mask.insert({ square, FOURTH_RANK });
+		}
+		else if ((square & FIFTH_RANK) != 0) {
+			mask.insert({ square, FIFTH_RANK });
+		}
+		else if ((square & SIXTH_RANK) != 0) {
+			mask.insert({ square, SIXTH_RANK });
+		}
+		else if ((square & SEVENTH_RANK) != 0) {
+			mask.insert({ square, SEVENTH_RANK });
+		}
+		else if ((square & EIGHTH_RANK) != 0) {
+			mask.insert({ square, EIGHTH_RANK });
+		}
+	}
+	return mask;
+}
+
+// Creates a hash table mapping every (individual) square to its file
+std::unordered_map<uint64_t, uint64_t> get_file_mask() {
+	std::unordered_map<uint64_t, uint64_t> mask = {};
+	mask.rehash(64);
+	uint64_t square = 1;
+	for (int i = 0; i < 64; i++) {
+		if ((square & FIRST_FILE) != 0) {
+			mask.insert({ square, FIRST_FILE });
+		}
+		else if ((square & SECOND_FILE) != 0) {
+			mask.insert({ square, SECOND_FILE });
+		}
+		else if ((square & THIRD_FILE) != 0) {
+			mask.insert({ square, THIRD_FILE });
+		}
+		else if ((square & FOURTH_FILE) != 0) {
+			mask.insert({ square, FOURTH_FILE });
+		}
+		else if ((square & FIFTH_FILE) != 0) {
+			mask.insert({ square, FIFTH_FILE });
+		}
+		else if ((square & SIXTH_FILE) != 0) {
+			mask.insert({ square, SIXTH_FILE });
+		}
+		else if ((square & SEVENTH_FILE) != 0) {
+			mask.insert({ square, SEVENTH_FILE });
+		}
+		else if ((square & EIGHTH_FILE) != 0) {
+			mask.insert({ square, EIGHTH_FILE });
+		}
+	}
+	return mask;
+}
+
+// Creates a hash table mapping every (individual) square to its north-east diagonal.
+std::unordered_map<uint64_t, uint64_t> get_diag_mask_ne() {
+	std::unordered_map<uint64_t, uint64_t> mask = {};
+	mask.rehash(64);
+	uint64_t square = 1;
+	for (int i = 0; i < 64; i++) {
+		uint64_t diag = square;
+		uint64_t copy = square;
+		while (copy != 0) {
+			copy >>= BOARD_ROW + BOARD_COL;
+			diag |= copy;
+		}
+		copy = square;
+		while (copy != 0) {
+			copy <<= BOARD_ROW + BOARD_COL;
+			diag |= copy;
+		}
+		// Fix wrap-around
+		diag &= (square & BOARD_WHITE_SQUARE_MASK) |= 0 ? BOARD_WHITE_SQUARE_MASK : BOARD_BLACK_SQUARE_MASK;
+		mask.insert({ square, diag });
+	}
+}
+
+// Creates a hash table mapping every (individual) square to its north-west diagonal.
+std::unordered_map<uint64_t, uint64_t> get_diag_mask_nw() {
+	std::unordered_map<uint64_t, uint64_t> mask = {};
+	mask.rehash(64);
+	uint64_t square = 1;
+	for (int i = 0; i < 64; i++) {
+		uint64_t diag = square;
+		uint64_t copy = square;
+		while (copy != 0) {
+			copy >>= BOARD_ROW - BOARD_COL;
+			diag |= copy;
+		}
+		copy = square;
+		while (copy != 0) {
+			copy <<= BOARD_ROW - BOARD_COL;
+			diag |= copy;
+		}
+		// Fix wrap-around
+		diag &= (square & BOARD_WHITE_SQUARE_MASK) != 0 ? BOARD_WHITE_SQUARE_MASK : BOARD_BLACK_SQUARE_MASK;
+		mask.insert({ square, diag });
+	}
+}
+
+// This function is unholy.
+std::unordered_map<uint16_t, uint8_t> get_rank_attacks() {
+	// Define the map and allocate required space
+	std::unordered_map<uint16_t, uint8_t> map = {};
+	map.rehash(8 * 256);
+	// This will go through all the squares on the rank
+	uint8_t square = 1;
+	while (square != 0) {
+		for (int i = 0; i < 256; i++) {
+			uint8_t occupancy = i;
+			// goLeft will move to the left of our square, until it meets an occupied square.
+			uint8_t goLeft = square >> 1;
+			uint8_t attacks = 0;
+			while ((goLeft != 0) && ((goLeft & occupancy) == 0)) {
+				attacks |= goLeft;
+				goLeft >>= 1;
+			}
+			
+			// Add the square that was occupied (This is the intended behaviour of the function).
+			attacks |= goLeft;
+
+			// goRight will move to the right of our square, until it meets an occupied square.
+			uint8_t goRight = square << 1;
+			while ((goRight != 0) && ((goRight & occupancy) == 0)) {
+				attacks |= goRight;
+				goRight <<= 1;
+			}
+
+			// Add the square that was occupied (This is the intended behaviour of the function).
+			attacks |= goRight;
+
+			// Create the key that will be used to look up (This is subject to change).
+			uint16_t key = 0;
+			*(uint8_t*)&key = square;
+			*(uint8_t*)(&key + 1) = occupancy;
+			map.insert({ key, attacks });
+		}
+	}
+	return map;
+}
 
 
 // Returns all the valid squares for a knight on 'square' to move to, given 'friendly_pieces',
@@ -27,6 +183,8 @@ BitBoard BoardState::pseudo_legal_knights_moves(Colour colour) {
     // Dont think we really need the code below anymore, also works if only a single bit 
 	//   is set in pieces_knights, so would have to iterate through each one.
 	//   Commented out for now incase we need to add it back later.
+	// We still need it but it won't work if we require the code to work for
+	//   multiple knights.
     
 	// Check that the only possible squares it can move to are ones of 
 	//   a colour it was not previously on
@@ -106,11 +264,11 @@ BitBoard BoardState::pseudo_legal_pawn_moves(Colour colour) {
 		
 	}
 
-	if ((square & FIRST_COL) > 0) {
-		allsquares &= ~EIGHTH_COL;
+	if ((square & FIRST_FILE) > 0) {
+		allsquares &= ~EIGHTH_FILE;
 	}
-	else if ((square & EIGHTH_COL) > 0) {
-		allsquares &= ~FIRST_COL;
+	else if ((square & EIGHTH_FILE) > 0) {
+		allsquares &= ~FIRST_FILE;
 	}
 
 	return allsquares;
