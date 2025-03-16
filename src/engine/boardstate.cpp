@@ -65,7 +65,7 @@ BitBoard BoardState::pseudo_legal_pawn_moves(Colour colour) {
 
 	if (white) {
 		// Check if the pawn is on the second rank
-		if ((square & (0xFF << BOARD_ROW)) > 0) {
+		if ((square & SECOND_RANK) > 0) {
 			// Add the two squares the pawn could move to in theory
 			allsquares |= square << BOARD_ROW;
 			allsquares |= square << (2 * BOARD_ROW);
@@ -87,7 +87,7 @@ BitBoard BoardState::pseudo_legal_pawn_moves(Colour colour) {
 	}
 	else {
 		// Check if the pawn is on the seventh rank
-		if ((square & (0xFF << (6 * BOARD_ROW))) > 0) {
+		if ((square & SEVENTH_RANK) > 0) {
 			// Add the two squares the pawn could move to in theory
 			allsquares |= square >> BOARD_ROW;
 			allsquares |= square >> (2 * BOARD_ROW);
@@ -106,11 +106,11 @@ BitBoard BoardState::pseudo_legal_pawn_moves(Colour colour) {
 		
 	}
 
-	if ((square & BOARD_LEFT_COL_MASK) > 0) {
-		allsquares &= ~BOARD_RIGHT_COL_MASK;
+	if ((square & FIRST_COL) > 0) {
+		allsquares &= ~EIGHTH_COL;
 	}
-	else if ((square & BOARD_RIGHT_COL_MASK) > 0) {
-		allsquares &= ~BOARD_LEFT_COL_MASK;
+	else if ((square & EIGHTH_COL) > 0) {
+		allsquares &= ~FIRST_COL;
 	}
 
 	return allsquares;
