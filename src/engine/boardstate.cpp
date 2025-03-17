@@ -2,6 +2,36 @@
 
 #include <cstdint>
 
+inline constexpr BitBoard translate(BitBoard pieces, int8_t row_mod, int8_t col_mod) {
+    // row_mod is the number of rows down, col_mod is the number of colums left
+    // Work out which columns would be in if wrapping was allowed
+	// Shift all the bits by the required amount
+	// Apply the mask to remove the illegal moves
+
+	BitBoard columns_mask = 0;
+	if (col_mod < 0) {
+		columns_mask = BOARD_LEFT_COL_MASK;
+		for (int i = 1; i < -col_mod; i++) {
+			columns_mask |= columns_mask >> 1;
+		}
+	} else if (col_mod > 0) {
+		columns_mask = BOARD_RIGHT_COL_MASK;
+		for (int i = 1; i < col_mod; i++) {
+			columns_mask |= columns_mask << 1;
+		}
+	}
+
+	if (row_mod > 0) {
+		return (pieces >> (BOARD_ROW * row_mod + BOARD_COL * col_mod)) & (~columns_mask);
+	} else if (row_mod < 0) {
+		return (pieces << (BOARD_ROW * row_mod - BOARD_COL * col_mod)) & (~columns_mask);
+	}
+	if (col_mod >= 0) {
+		return (pieces >> col_mod) & columns_mask;
+	}
+	return (pieces << -col_mod) & columns_mask;
+}
+
 
 // Returns all the valid squares for a knight on 'square' to move to, given 'friendly_pieces',
 // which is the position of all pieces of the same colour as the knight.
@@ -9,28 +39,21 @@ BitBoard BoardState::pseudo_legal_knights_moves(Colour colour) {
     BitBoard friendly_pieces = (colour == COL_WHITE ? pieces_white : pieces_black);
     BitBoard friendly_knights = pieces_knights & friendly_pieces;
 
-	uint64_t possible_moves = 0;
+	BitBoard possible_moves = 0;
     // Set bits of squares which the knight can move to
-	possible_moves |= friendly_knights >> (BOARD_ROW + 2 * BOARD_COL);
-	possible_moves |= friendly_knights >> (BOARD_ROW - 2 * BOARD_COL);
-	possible_moves |= friendly_knights >> (2 * BOARD_ROW - BOARD_COL);
-	possible_moves |= friendly_knights >> (2 * BOARD_ROW + BOARD_COL);
-	possible_moves |= friendly_knights << (BOARD_ROW - 2 * BOARD_COL);
-	possible_moves |= friendly_knights << (BOARD_ROW + 2 * BOARD_COL);
-	possible_moves |= friendly_knights << (2 * BOARD_ROW - BOARD_COL);
-	possible_moves |= friendly_knights << (2 * BOARD_ROW + BOARD_COL);
-    // TODO: Check to see if goes out of bounds of the board
+
+	// Get a bitboard of the possible moves of all knights on the board
+	possible_moves |= translate(friendly_knights,  1,  2);
+	possible_moves |= translate(friendly_knights,  1, -2);
+	possible_moves |= translate(friendly_knights, -1,  2);
+	possible_moves |= translate(friendly_knights, -1, -2);
+	possible_moves |= translate(friendly_knights,  2,  1);
+	possible_moves |= translate(friendly_knights,  2, -1);
+	possible_moves |= translate(friendly_knights, -2,  1);
+	possible_moves |= translate(friendly_knights, -2, -1);
 
     // Can not move to squares that are occupied by own pieces
     possible_moves &= ~friendly_pieces;
-    
-    // Dont think we really need the code below anymore, also works if only a single bit 
-	//   is set in pieces_knights, so would have to iterate through each one.
-	//   Commented out for now incase we need to add it back later.
-    
-	// Check that the only possible squares it can move to are ones of 
-	//   a colour it was not previously on
-    // possible_moves &= (((friendly_knights & BOARD_WHITE_SQUARE_MASK) > 0) ? BOARD_BLACK_SQUARE_MASK : BOARD_WHITE_SQUARE_MASK)
 
 	return possible_moves;
 }
