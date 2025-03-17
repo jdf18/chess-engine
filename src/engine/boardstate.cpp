@@ -89,10 +89,10 @@ std::unordered_map<uint64_t, uint64_t> get_diag_mask_ne() {
 			diag |= copy;
 		}
 		// Fix wrap-around
-		//diag &= (square & BOARD_WHITE_SQUARE_MASK) |= 0 ? BOARD_WHITE_SQUARE_MASK : BOARD_BLACK_SQUARE_MASK;
-		//TODO: Fix this
+		diag &= ((square & BOARD_WHITE_SQUARE_MASK) != 0) ? BOARD_WHITE_SQUARE_MASK : BOARD_BLACK_SQUARE_MASK;
 		mask.insert({ square, diag });
 	}
+	return mask;
 }
 
 // Creates a hash table mapping every (individual) square to its north-west diagonal.
@@ -113,9 +113,10 @@ std::unordered_map<uint64_t, uint64_t> get_diag_mask_nw() {
 			diag |= copy;
 		}
 		// Fix wrap-around
-		diag &= (square & BOARD_WHITE_SQUARE_MASK) != 0 ? BOARD_WHITE_SQUARE_MASK : BOARD_BLACK_SQUARE_MASK;
+		diag &= ((square & BOARD_WHITE_SQUARE_MASK) != 0) ? BOARD_WHITE_SQUARE_MASK : BOARD_BLACK_SQUARE_MASK;
 		mask.insert({ square, diag });
 	}
+	return mask;
 }
 
 // This function is unholy.
@@ -181,12 +182,12 @@ inline constexpr BitBoard translate(BitBoard pieces, int8_t row_mod, int8_t col_
 	if (row_mod > 0) {
 		return (pieces >> (BOARD_ROW * row_mod + BOARD_COL * col_mod)) & (~columns_mask);
 	} else if (row_mod < 0) {
-		return (pieces << (BOARD_ROW * row_mod - BOARD_COL * col_mod)) & (~columns_mask);
+		return (pieces << (BOARD_ROW * (-row_mod) - BOARD_COL * col_mod)) & (~columns_mask);
 	}
 	if (col_mod >= 0) {
-		return (pieces >> col_mod) & columns_mask;
+		return (pieces >> col_mod) & (~columns_mask);
 	}
-	return (pieces << -col_mod) & columns_mask;
+	return (pieces << -col_mod) & (~columns_mask);
 }
 
 
