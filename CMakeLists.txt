@@ -6,5 +6,6 @@ set(CMAKE_CXX_COMPILER cl.exe)
 ENDIF()
 
 project(Engine)
+add_compile_options(-g3)
 
 add_executable(Engine src/engine/engine.cpp src/engine/boardstate.cpp)
