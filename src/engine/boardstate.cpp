@@ -1,6 +1,163 @@
 #include "boardstate.h"
 
 #include <cstdint>
+#include <unordered_map>
+
+// Creates a hash table mapping every (individual) square to its rank
+std::unordered_map<uint64_t, uint64_t> get_rank_mask() {
+	std::unordered_map<uint64_t, uint64_t> mask = {};
+	mask.rehash(64);
+	uint64_t square = 1;
+	for (int i = 0; i < 64; i++) {
+		if ((square & FIRST_RANK) != 0) {
+			mask.insert({ square, FIRST_RANK });
+		}
+		else if ((square & SECOND_RANK) != 0) {
+			mask.insert({ square, SECOND_RANK });
+		}
+		else if ((square & THIRD_RANK) != 0) {
+			mask.insert({ square, THIRD_RANK });
+		}
+		else if ((square & FOURTH_RANK) != 0) {
+			mask.insert({ square, FOURTH_RANK });
+		}
+		else if ((square & FIFTH_RANK) != 0) {
+			mask.insert({ square, FIFTH_RANK });
+		}
+		else if ((square & SIXTH_RANK) != 0) {
+			mask.insert({ square, SIXTH_RANK });
+		}
+		else if ((square & SEVENTH_RANK) != 0) {
+			mask.insert({ square, SEVENTH_RANK });
+		}
+		else if ((square & EIGHTH_RANK) != 0) {
+			mask.insert({ square, EIGHTH_RANK });
+		}
+	}
+	return mask;
+}
+
+// Creates a hash table mapping every (individual) square to its file
+std::unordered_map<uint64_t, uint64_t> get_file_mask() {
+	std::unordered_map<uint64_t, uint64_t> mask = {};
+	mask.rehash(64);
+	uint64_t square = 1;
+	for (int i = 0; i < 64; i++) {
+		if ((square & FIRST_FILE) != 0) {
+			mask.insert({ square, FIRST_FILE });
+		}
+		else if ((square & SECOND_FILE) != 0) {
+			mask.insert({ square, SECOND_FILE });
+		}
+		else if ((square & THIRD_FILE) != 0) {
+			mask.insert({ square, THIRD_FILE });
+		}
+		else if ((square & FOURTH_FILE) != 0) {
+			mask.insert({ square, FOURTH_FILE });
+		}
+		else if ((square & FIFTH_FILE) != 0) {
+			mask.insert({ square, FIFTH_FILE });
+		}
+		else if ((square & SIXTH_FILE) != 0) {
+			mask.insert({ square, SIXTH_FILE });
+		}
+		else if ((square & SEVENTH_FILE) != 0) {
+			mask.insert({ square, SEVENTH_FILE });
+		}
+		else if ((square & EIGHTH_FILE) != 0) {
+			mask.insert({ square, EIGHTH_FILE });
+		}
+	}
+	return mask;
+}
+
+// Creates a hash table mapping every (individual) square to its north-east diagonal.
+std::unordered_map<uint64_t, uint64_t> get_diag_mask_ne() {
+	std::unordered_map<uint64_t, uint64_t> mask = {};
+	mask.rehash(64);
+	uint64_t square = 1;
+	for (int i = 0; i < 64; i++) {
+		uint64_t diag = square;
+		uint64_t copy = square;
+		while (copy != 0) {
+			copy >>= BOARD_ROW + BOARD_COL;
+			diag |= copy;
+		}
+		copy = square;
+		while (copy != 0) {
+			copy <<= BOARD_ROW + BOARD_COL;
+			diag |= copy;
+		}
+		// Fix wrap-around
+		//diag &= (square & BOARD_WHITE_SQUARE_MASK) |= 0 ? BOARD_WHITE_SQUARE_MASK : BOARD_BLACK_SQUARE_MASK;
+		//TODO: Fix this
+		mask.insert({ square, diag });
+	}
+}
+
+// Creates a hash table mapping every (individual) square to its north-west diagonal.
+std::unordered_map<uint64_t, uint64_t> get_diag_mask_nw() {
+	std::unordered_map<uint64_t, uint64_t> mask = {};
+	mask.rehash(64);
+	uint64_t square = 1;
+	for (int i = 0; i < 64; i++) {
+		uint64_t diag = square;
+		uint64_t copy = square;
+		while (copy != 0) {
+			copy >>= BOARD_ROW - BOARD_COL;
+			diag |= copy;
+		}
+		copy = square;
+		while (copy != 0) {
+			copy <<= BOARD_ROW - BOARD_COL;
+			diag |= copy;
+		}
+		// Fix wrap-around
+		diag &= (square & BOARD_WHITE_SQUARE_MASK) != 0 ? BOARD_WHITE_SQUARE_MASK : BOARD_BLACK_SQUARE_MASK;
+		mask.insert({ square, diag });
+	}
+}
+
+// This function is unholy.
+std::unordered_map<uint16_t, uint8_t> get_rank_attacks() {
+	// Define the map and allocate required space
+	std::unordered_map<uint16_t, uint8_t> map = {};
+	map.rehash(8 * 256);
+	// This will go through all the squares on the rank
+	uint8_t square = 1;
+	while (square != 0) {
+		for (int i = 0; i < 256; i++) {
+			uint8_t occupancy = i;
+			// goLeft will move to the left of our square, until it meets an occupied square.
+			uint8_t goLeft = square >> 1;
+			uint8_t attacks = 0;
+			while ((goLeft != 0) && ((goLeft & occupancy) == 0)) {
+				attacks |= goLeft;
+				goLeft >>= 1;
+			}
+			
+			// Add the square that was occupied (This is the intended behaviour of the function).
+			attacks |= goLeft;
+
+			// goRight will move to the right of our square, until it meets an occupied square.
+			uint8_t goRight = square << 1;
+			while ((goRight != 0) && ((goRight & occupancy) == 0)) {
+				attacks |= goRight;
+				goRight <<= 1;
+			}
+
+			// Add the square that was occupied (This is the intended behaviour of the function).
+			attacks |= goRight;
+
+			// Create the key that will be used to look up (This is subject to change).
+			uint16_t key = 0;
+			*(uint8_t*)&key = square;
+			*(uint8_t*)(&key + 1) = occupancy;
+			map.insert({ key, attacks });
+		}
+	}
+	return map;
+}
 
 inline constexpr BitBoard translate(BitBoard pieces, int8_t row_mod, int8_t col_mod) {
     // row_mod is the number of rows down, col_mod is the number of colums left
@@ -10,12 +167,12 @@ inline constexpr BitBoard translate(BitBoard pieces, int8_t row_mod, int8_t col_
 
 	BitBoard columns_mask = 0;
 	if (col_mod < 0) {
-		columns_mask = BOARD_LEFT_COL_MASK;
+		columns_mask = FIRST_FILE;
 		for (int i = 1; i < -col_mod; i++) {
 			columns_mask |= columns_mask << 1;
 		}
 	} else if (col_mod > 0) {
-		columns_mask = BOARD_RIGHT_COL_MASK;
+		columns_mask = EIGHTH_FILE;
 		for (int i = 1; i < col_mod; i++) {
 			columns_mask |= columns_mask >> 1;
 		}
@@ -55,7 +212,7 @@ BitBoard BoardState::pseudo_legal_knights_moves(Colour colour) {
     // Can not move to squares that are occupied by own pieces
     possible_moves &= ~friendly_pieces;
 
-	return possible_moves;
+    return possible_moves;
 }
 
 // Returns all the valid movs for a pawn on 'square' to move to, given 'pieces',
@@ -88,7 +245,7 @@ BitBoard BoardState::pseudo_legal_pawn_moves(Colour colour) {
 
 	if (white) {
 		// Check if the pawn is on the second rank
-		if ((square & (0xFF << BOARD_ROW)) > 0) {
+		if ((square & SECOND_RANK) > 0) {
 			// Add the two squares the pawn could move to in theory
 			allsquares |= square << BOARD_ROW;
 			allsquares |= square << (2 * BOARD_ROW);
@@ -110,7 +267,7 @@ BitBoard BoardState::pseudo_legal_pawn_moves(Colour colour) {
 	}
 	else {
 		// Check if the pawn is on the seventh rank
-		if ((square & (0xFF << (6 * BOARD_ROW))) > 0) {
+		if ((square & SEVENTH_RANK) > 0) {
 			// Add the two squares the pawn could move to in theory
 			allsquares |= square >> BOARD_ROW;
 			allsquares |= square >> (2 * BOARD_ROW);
@@ -129,11 +286,11 @@ BitBoard BoardState::pseudo_legal_pawn_moves(Colour colour) {
 		
 	}
 
-	if ((square & BOARD_LEFT_COL_MASK) > 0) {
-		allsquares &= ~BOARD_RIGHT_COL_MASK;
+	if ((square & FIRST_FILE) > 0) {
+		allsquares &= ~EIGHTH_FILE;
 	}
-	else if ((square & BOARD_RIGHT_COL_MASK) > 0) {
-		allsquares &= ~BOARD_LEFT_COL_MASK;
+	else if ((square & EIGHTH_FILE) > 0) {
+		allsquares &= ~FIRST_FILE;
 	}
 
 	return allsquares;
