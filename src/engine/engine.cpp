@@ -19,10 +19,7 @@ BitBoard reverse_board(BitBoard to_reverse) {
 }
 
 static void out_bitboard(BitBoard to_out) {
-    std::cout << std::bitset<64>(to_out).to_string() << std::endl;
     to_out = reverse_board(to_out);
-    std::cout << std::bitset<64>(to_out).to_string() << std::endl;
-    std::cout << std::endl;
     std::cout << std::bitset<8>(to_out & 0xFF).to_string() << std::endl;
     std::cout << std::bitset<8>((to_out & 0xFF00) >> 8).to_string() << std::endl;
     std::cout << std::bitset<8>((to_out & 0xFF0000) >> 16).to_string() << std::endl;
