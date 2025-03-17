@@ -12,12 +12,12 @@ inline constexpr BitBoard translate(BitBoard pieces, int8_t row_mod, int8_t col_
 	if (col_mod < 0) {
 		columns_mask = BOARD_LEFT_COL_MASK;
 		for (int i = 1; i < -col_mod; i++) {
-			columns_mask |= columns_mask >> 1;
+			columns_mask |= columns_mask << 1;
 		}
 	} else if (col_mod > 0) {
 		columns_mask = BOARD_RIGHT_COL_MASK;
 		for (int i = 1; i < col_mod; i++) {
-			columns_mask |= columns_mask << 1;
+			columns_mask |= columns_mask >> 1;
 		}
 	}
 
