@@ -160,7 +160,7 @@ std::unordered_map<uint16_t, uint8_t> get_rank_attacks() {
 	return map;
 }
 
-inline constexpr BitBoard translate(BitBoard pieces, int8_t row_mod, int8_t col_mod) {
+inline BitBoard translate(BitBoard pieces, int8_t row_mod, int8_t col_mod) {
     // row_mod is the number of rows down, col_mod is the number of colums left
     // Work out which columns would be in if wrapping was allowed
 	// Shift all the bits by the required amount
@@ -242,7 +242,7 @@ BitBoard BoardState::pseudo_legal_pawn_moves(Colour colour) {
 
 	bool white = (colour == COL_WHITE);
 
-	uint64_t allsquares = 0;
+	BitBoard allsquares = 0;
 
 	if (white) {
 		// Check if the pawn is on the second rank
