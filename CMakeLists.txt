@@ -8,4 +8,7 @@ ELSE()
 add_compile_options(-g3)
 ENDIF()
 
-add_executable(Engine src/engine/engine.cpp src/engine/boardstate.cpp)
+add_executable(Engine   
+    src/engine/engine.cpp 
+    src/engine/boardstate.cpp
+)
