@@ -17,6 +17,11 @@ int main() {
 
     possible_moves.out();
 
+    std::cout << std::endl;
+
+    std::unordered_map<uint16_t, uint8_t> rank_attacks = get_rank_attacks();
+
+    std::cout << std::bitset<8>(rank_attacks[0x08C3]).to_string() << std::endl;
 
     return 0;
 }
