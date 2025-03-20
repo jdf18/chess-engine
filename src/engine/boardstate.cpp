@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <unordered_map>
+#include <cstdio>
 
 // Creates a hash table mapping every (individual) square to its rank
 std::unordered_map<uint64_t, uint64_t> get_rank_mask() {
@@ -151,11 +152,10 @@ std::unordered_map<uint16_t, uint8_t> get_rank_attacks() {
 			attacks |= goRight;
 
 			// Create the key that will be used to look up (This is subject to change).
-			uint16_t key = 0;
-			*(uint8_t*)&key = square;
-			*(uint8_t*)(&key + 1) = occupancy;
+			uint16_t key = (square << 8) | occupancy;
 			map.insert({ key, attacks });
 		}
+		square++;
 	}
 	return map;
 }
