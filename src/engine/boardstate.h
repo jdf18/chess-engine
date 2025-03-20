@@ -1,7 +1,5 @@
 #include <cstdint>
 #include <unordered_map>
-#include <iostream>
-#include <bitset>
 
 #include "pieces.h"
 #include "bitboard.h"
