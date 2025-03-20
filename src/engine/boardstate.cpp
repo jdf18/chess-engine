@@ -2,7 +2,6 @@
 
 #include <cstdint>
 #include <unordered_map>
-#include <cstdio>
 
 // Creates a hash table mapping every (individual) square to its rank
 std::unordered_map<uint64_t, uint64_t> get_rank_mask() {
