@@ -2,35 +2,13 @@
 #include <unordered_map>
 
 #include "pieces.h"
-
-#define BOARD_ROW 8
-#define BOARD_COL 1
-
-#define BOARD_WHITE_SQUARE_MASK 0x55AA55AA55AA55AA
-#define BOARD_BLACK_SQUARE_MASK ~BOARD_WHITE_SQUARE_MASK
-
-#define FIRST_RANK 0xFF
-#define SECOND_RANK 0xFF00
-#define THIRD_RANK 0xFF0000
-#define FOURTH_RANK 0xFF000000
-#define FIFTH_RANK 0xFF00000000
-#define SIXTH_RANK 0xFF0000000000
-#define SEVENTH_RANK 0xFF000000000000
-#define EIGHTH_RANK 0xFF00000000000000
-
-#define FIRST_FILE 0x0101010101010101
-#define SECOND_FILE 0x0202020202020202
-#define THIRD_FILE 0x0404040404040404
-#define FOURTH_FILE 0x0808080808080808
-#define FIFTH_FILE 0x1010101010101010
-#define SIXTH_FILE 0x2020202020202020
-#define SEVENTH_FILE 0x4040404040404040
-#define EIGHTH_FILE 0x8080808080808080
+#include "bitboard.h"
 
 std::unordered_map<uint64_t, uint64_t> get_file_mask();
 std::unordered_map<uint64_t, uint64_t> get_rank_mask();
 std::unordered_map<uint64_t, uint64_t> get_diag_mask_ne();
 std::unordered_map<uint64_t, uint64_t> get_diag_mask_nw();
+std::unordered_map<uint16_t, uint8_t> get_rank_attacks();
 
 // bitboards: 64 bit unsigned integers, with 1 bit for each square of the board.
 //   There will be quite a few different bitboards, containing useful information.
@@ -52,8 +30,6 @@ std::unordered_map<uint64_t, uint64_t> get_diag_mask_nw();
 //     pieces_knights: Has a bit where all the knights are.
 //     pieces_bishops: Has a bit where all the bishops are.
 //     pieces_pawns: Has a bit where all the pawns are.
-
-typedef uint64_t BitBoard;
 
 struct BoardState {
     BitBoard pieces_white;
