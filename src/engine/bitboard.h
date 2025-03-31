@@ -1,3 +1,6 @@
+#ifndef BITBOARD_H
+#define BITBOARD_H
+
 #include <cstdint>
 #include <iostream>
 #include <bitset>
@@ -127,3 +130,5 @@ inline bool operator >(BitBoard lhs, uint64_t rhs) {
 inline bool operator <(BitBoard lhs, uint64_t rhs) {
     return lhs.board < rhs;
 }
+
+#endif //BITBOARD_H

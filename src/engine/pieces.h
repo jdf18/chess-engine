@@ -1,3 +1,6 @@
+#ifndef PIECES_H
+#define PIECES_H
+
 typedef enum {
     COL_BLACK,
     COL_WHITE
@@ -11,3 +14,5 @@ typedef enum {
     PIECE_BISHOP,
     PIECE_PAWN
 } Pieces;
+
+#endif //PIECES_H

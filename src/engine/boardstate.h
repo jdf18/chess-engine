@@ -1,3 +1,6 @@
+#ifndef BOARDSTATE_H
+#define BOARDSTATE_H
+
 #include <cstdint>
 #include <unordered_map>
 
@@ -62,3 +65,4 @@ struct BoardState {
     BitBoard pseudo_legal_pawn_moves(Colour colour);
 };
 
+#endif //BOARDSTATE_H
