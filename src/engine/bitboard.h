@@ -1,4 +1,6 @@
 #include <cstdint>
+#include <iostream>
+#include <bitset>
 
 #define BOARD_ROW 8
 #define BOARD_COL 1
