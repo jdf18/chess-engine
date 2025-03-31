@@ -19,9 +19,16 @@ int main() {
 
     std::cout << std::endl;
 
-    std::unordered_map<uint16_t, uint8_t> rank_attacks = get_rank_attacks();
+    BitBoard rook_pos = 0x0000100000000000;
+    rook_pos.out();
 
-    std::cout << std::bitset<8>(rank_attacks[0x08C3]).to_string() << std::endl;
+    initial_state.pieces_white |= rook_pos;
+
+    BitBoard rook_moves = initial_state.pseudo_legal_rook_moves(COL_WHITE, rook_pos);
+
+    std::cout << std::endl;
+
+    rook_moves.out();
 
     return 0;
 }

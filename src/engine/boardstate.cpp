@@ -3,6 +3,13 @@
 #include <cstdint>
 #include <unordered_map>
 
+
+std::unordered_map<uint64_t, uint64_t> file_masks = get_file_mask();
+std::unordered_map<uint64_t, uint64_t> rank_masks = get_rank_mask();
+std::unordered_map<uint64_t, uint64_t> diag_masks_ne = get_diag_mask_ne();
+std::unordered_map<uint64_t, uint64_t> diag_masks_nw = get_diag_mask_nw();
+std::unordered_map<uint16_t, uint8_t> rank_attacks_map = get_rank_attacks();
+
 // Creates a hash table mapping every (individual) square to its rank
 std::unordered_map<uint64_t, uint64_t> get_rank_mask() {
 	std::unordered_map<uint64_t, uint64_t> mask = {};
@@ -33,6 +40,7 @@ std::unordered_map<uint64_t, uint64_t> get_rank_mask() {
 		else if ((square & EIGHTH_RANK) != 0) {
 			mask.insert({ square, EIGHTH_RANK });
 		}
+		square <<= 1;
 	}
 	return mask;
 }
@@ -67,6 +75,7 @@ std::unordered_map<uint64_t, uint64_t> get_file_mask() {
 		else if ((square & EIGHTH_FILE) != 0) {
 			mask.insert({ square, EIGHTH_FILE });
 		}
+		square <<= 1;
 	}
 	return mask;
 }
@@ -91,6 +100,7 @@ std::unordered_map<uint64_t, uint64_t> get_diag_mask_ne() {
 		// Fix wrap-around
 		diag &= ((square & BOARD_WHITE_SQUARE_MASK) != 0) ? BOARD_WHITE_SQUARE_MASK : BOARD_BLACK_SQUARE_MASK;
 		mask.insert({ square, diag });
+		square <<= 1;
 	}
 	return mask;
 }
@@ -115,11 +125,14 @@ std::unordered_map<uint64_t, uint64_t> get_diag_mask_nw() {
 		// Fix wrap-around
 		diag &= ((square & BOARD_WHITE_SQUARE_MASK) != 0) ? BOARD_WHITE_SQUARE_MASK : BOARD_BLACK_SQUARE_MASK;
 		mask.insert({ square, diag });
+		square <<= 1;
 	}
 	return mask;
 }
 
 // This function is unholy.
+// Creates a hash table mapping the square (on a rank) that a piece is on and the rank occupancy to all squares on that rank attacked by that piece.
+// This same hash table can be used for files if we do some processing to the file first.
 std::unordered_map<uint16_t, uint8_t> get_rank_attacks() {
 	// Define the map and allocate required space
 	std::unordered_map<uint16_t, uint8_t> map = {};
@@ -157,6 +170,60 @@ std::unordered_map<uint16_t, uint8_t> get_rank_attacks() {
 		square++;
 	}
 	return map;
+}
+
+//uint16_t BoardState::get_file_key(uint64_t piece_square) {
+//	//Get the occupancy for the whole board
+//	uint64_t board_occupancy = pieces_white.board | pieces_black.board;
+//	//Get the file mask that the square is on
+//	uint64_t file_mask = file_masks[piece_square];
+//	//Mask only the occupancy for the file the square is on.
+//	uint64_t file_occupancy = board_occupancy & file_mask;
+//	//Shift the file to the left (by doing right shifts) until it is on the first file
+//	//Keep track of the required shifts so that we can do it again for the square
+//	int shift_counter = 0;
+//	//This condition will always be satisfied eventually as the square the piece is on is part of the file.
+//	while ((file_occupancy & FIRST_FILE) == 0) {
+//		shift_counter += 1;
+//		file_occupancy >>= 1;
+//	}
+//	//Shift the bits so that they make up an 8-bit section of our result
+//	uint64_t compressed_file = file_occupancy;
+//	for (int i = 7; i <= 49; i += 7) {
+//		compressed_file |= file_occupancy >> i;
+//	}
+//	//Mask out the bits we want
+//	compressed_file &= 0xFF;
+//	
+//	//Get the piece on the right square
+//	uint64_t piece_pos = piece_square >> shift_counter;
+//
+//	//Keep shifting in multiples of 7
+//	for (int i = 7; i <= 49; i += 7) {
+//		piece_pos |= piece_pos >> i;
+//	}
+//	//Again mask the bits we want
+//	piece_pos &= 0xFF;
+//	//Return a valid key
+//	return (piece_pos << 8) | compressed_file;
+//}
+
+inline uint64_t rank_to_file(uint8_t rank) {
+	uint64_t output = 0;
+	for (int i = 0; i <= 49; i += 7) {
+		output |= rank << i;
+	}
+	output &= FIRST_FILE;
+	return output;
+}
+
+inline uint8_t file_to_rank(uint64_t file) {
+	uint64_t output = file;
+	for (int i = 7; i <= 49; i += 7) {
+		output |= file >> i;
+	}
+	output &= FIRST_RANK;
+	return output;
 }
 
 inline BitBoard translate(BitBoard pieces, int8_t row_mod, int8_t col_mod) {
@@ -294,5 +361,35 @@ BitBoard BoardState::pseudo_legal_pawn_moves(Colour colour) {
 	}
 
 	return allsquares;
+
+}
+
+BitBoard BoardState::pseudo_legal_rook_moves(Colour colour, BitBoard square) {
+	uint64_t friendly_pieces = (colour == COL_WHITE ? pieces_white.board : pieces_black.board);
+	uint64_t all_pieces = pieces_white.board | pieces_black.board;
+	uint64_t rank_mask = rank_masks[square.board];
+	uint64_t file_mask = file_masks[square.board];
+
+	//Get rank attacks:
+	uint64_t rank_only = all_pieces & rank_mask;
+	int shift_num = 0;
+	while ((rank_only & FIRST_RANK) == 0) {
+		shift_num++;
+		rank_only >>= BOARD_ROW;
+	}
+	uint16_t rank_key = ((square.board >> (shift_num * BOARD_ROW)) << 8) | rank_only;
+	uint64_t rank_attacks = (uint64_t)rank_attacks_map[rank_key] << (shift_num * BOARD_ROW);
+
+	//Get file attacks
+	uint64_t file_only = all_pieces & file_mask;
+	shift_num = 0;
+	while((file_only & FIRST_FILE) == 0) {
+		shift_num++;
+		file_only >>= BOARD_COL;
+	}
+	uint16_t file_key = (file_to_rank(square.board >> shift_num) << 8) | file_to_rank(file_only);
+	uint64_t file_attacks = rank_to_file(rank_attacks_map[file_key]) << shift_num;
+
+	return (rank_attacks | file_attacks) & ~friendly_pieces;
 
 }

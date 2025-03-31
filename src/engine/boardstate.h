@@ -13,6 +13,9 @@ std::unordered_map<uint64_t, uint64_t> get_diag_mask_ne();
 std::unordered_map<uint64_t, uint64_t> get_diag_mask_nw();
 std::unordered_map<uint16_t, uint8_t> get_rank_attacks();
 
+
+
+
 // bitboards: 64 bit unsigned integers, with 1 bit for each square of the board.
 //   There will be quite a few different bitboards, containing useful information.
 //   The least significant bit is the square a1. The next least significant is b1, 
@@ -59,7 +62,7 @@ struct BoardState {
 
     BitBoard pseudo_legal_king_moves(Colour colour);
     BitBoard pseudo_legal_queen_moves(Colour colour);
-    BitBoard pseudo_legal_rook_moves(Colour colour);
+    BitBoard pseudo_legal_rook_moves(Colour colour, BitBoard square);
     BitBoard pseudo_legal_knights_moves(Colour colour);
     BitBoard pseudo_legal_bishop_moves(Colour colour);
     BitBoard pseudo_legal_pawn_moves(Colour colour);
