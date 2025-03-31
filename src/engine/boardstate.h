@@ -4,6 +4,8 @@
 #include "pieces.h"
 #include "bitboard.h"
 
+typedef void* Move; // todo: temporary, will create this later, represents a possible move from a board state
+
 std::unordered_map<uint64_t, uint64_t> get_file_mask();
 std::unordered_map<uint64_t, uint64_t> get_rank_mask();
 std::unordered_map<uint64_t, uint64_t> get_diag_mask_ne();
