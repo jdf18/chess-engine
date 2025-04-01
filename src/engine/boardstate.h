@@ -2,28 +2,12 @@
 #define BOARDSTATE_H
 
 #include <cstdint>
-#include <optional>
+#include <memory>
 #include <unordered_map>
 
 #include "pieces.h"
+#include "piece.h"
 #include "bitboard.h"
-
-typedef struct SquarePosition {
-    uint8_t row;
-    uint8_t column;
-
-    SquarePosition(uint8_t row, uint8_t column) : row(row), column(column) {};
-} SquarePosition;
-
-typedef struct Move {
-    SquarePosition old_position;
-    SquarePosition new_position;
-    std::optional<Pieces> piece_promotion; // Optional
-
-    Move(SquarePosition from, SquarePosition to) : old_position(from), new_position(to), piece_promotion({}) {};
-    Move(SquarePosition from, SquarePosition to, Pieces promotion) :
-        old_position(from), new_position(to), piece_promotion(promotion) {};
-} Move;
 
 std::unordered_map<uint64_t, uint64_t> get_file_mask();
 std::unordered_map<uint64_t, uint64_t> get_rank_mask();
@@ -52,7 +36,11 @@ std::unordered_map<uint16_t, uint8_t> get_rank_attacks();
 //     pieces_bishops: Has a bit where all the bishops are.
 //     pieces_pawns: Has a bit where all the pawns are.
 
+class PieceInstance;
+
 struct BoardState {
+    PieceInstance pieces[36];
+
     BitBoard pieces_white;
     BitBoard pieces_black;
 
@@ -81,6 +69,23 @@ struct BoardState {
     BitBoard pseudo_legal_knights_moves(Colour colour);
     BitBoard pseudo_legal_bishop_moves(Colour colour);
     BitBoard pseudo_legal_pawn_moves(Colour colour);
+
+    BoardState(const BoardState& copy) {
+        pieces_white = copy.pieces_white;
+        pieces_black = copy.pieces_black;
+        pieces_kings = copy.pieces_kings;
+        pieces_queens = copy.pieces_queens;
+        pieces_rooks = copy.pieces_rooks;
+        pieces_knights = copy.pieces_knights;
+        pieces_bishops = copy.pieces_bishops;
+        pieces_pawns = copy.pieces_pawns;
+
+        for (int i = 0; i < 36; i++) {
+            pieces[i].piece = std::make_unique<Piece>(copy.pieces[i].piece->colour, copy.pieces[i].piece->type);
+            pieces[i].position = copy.pieces[i].position;
+        }
+    };
+    BoardState() = default;
 };
 
 #endif //BOARDSTATE_H

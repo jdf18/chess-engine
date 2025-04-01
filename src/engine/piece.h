@@ -2,67 +2,35 @@
 #define PIECE_H
 
 #include <vector>
+#include <memory>
 
 #include "pieces.h"
-#include "boardstate.h"
+
+struct BoardState;
 
 class Piece {
-protected:
-    Colour color;
-    Pieces type;
-
 public:
-    Piece(Colour colour, Pieces type) : color(colour), type(type) {};
+    const Colour colour;
+    const Pieces type;
 
-    virtual ~Piece() = default;
+    Piece(const Colour colour, const Pieces type) : colour(colour), type(type) {};
+    ~Piece() = default;
 
-    virtual std::vector<Move> generateMoves(BoardState boardState, SquarePosition position);
-};
-
-class King : public Piece {
-public:
-    King(Colour colour) : Piece(colour, PIECE_KING) {};
-    std::vector<Move> generateMoves(BoardState boardState, SquarePosition position) override;
-};
-
-class Queen : public Piece {
-public:
-    Queen(Colour colour) : Piece(colour, PIECE_QUEEN) {};
-    std::vector<Move> generateMoves(BoardState boardState, SquarePosition position) override;
-};
-
-class Rook : public Piece {
-public:
-    Rook(Colour colour) : Piece(colour, PIECE_ROOK) {};
-    std::vector<Move> generateMoves(BoardState boardState, SquarePosition position) override;
-};
-
-class Bishop : public Piece {
-public:
-    Bishop(Colour colour) : Piece(colour, PIECE_BISHOP) {};
-    std::vector<Move> generateMoves(BoardState boardState, SquarePosition position) override;
-};
-
-class Knight : public Piece {
-public:
-    Knight(Colour colour) : Piece(colour, PIECE_KNIGHT) {};
-    std::vector<Move> generateMoves(BoardState boardState, SquarePosition position) override;
-};
-
-class Pawn : public Piece {
-public:
-    Pawn(Colour colour) : Piece(colour, PIECE_PAWN) {};
-    std::vector<Move> generateMoves(BoardState boardState, SquarePosition position) override;
+    std::vector<Move> generateMoves(const BoardState& boardState, SquarePosition position);
 };
 
 class PieceInstance {
 public:
-    Piece piece;
-    SquarePosition position;
+    std::unique_ptr<Piece> piece{};
+    SquarePosition position{};
 
-    std::vector<Move> generateMoves(BoardState boardState) {
+    PieceInstance() : piece(std::make_unique<Piece>(COL_WHITE, PIECE_PAWN)) {};
+    PieceInstance(const PieceInstance& copy) : piece(std::make_unique<Piece>(copy.piece->colour, copy.piece->type)) {};
+    PieceInstance(std::unique_ptr<Piece> piece, const SquarePosition position) : piece(std::move(piece)), position(position) {};
+
+    std::vector<Move> generateMoves(const BoardState& boardState) {
         // Calls the virtual function for the specific type of piece
-        return piece.generateMoves(boardState, position);
+        return piece->generateMoves(boardState, position);
     };
 };
 
