@@ -12,6 +12,8 @@ typedef struct NodeData {
 
     NodeData(NodeData const &copy) = default;
     NodeData(BoardState const &board_state, Move const &previous_move) : board_state(board_state), previous_move(previous_move) {};
+
+    bool initialise_node(); // Returns if the move was valid or not
 } NodeData;
 
 typedef class DecisionTreeNode {

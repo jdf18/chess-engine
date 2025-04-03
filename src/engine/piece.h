@@ -16,7 +16,7 @@ public:
     Piece(const Colour colour, const Pieces type) : colour(colour), type(type) {};
     ~Piece() = default;
 
-    std::vector<Move> generateMoves(const BoardState& boardState, SquarePosition position);
+    std::vector<Move> generateMoves(const BoardState& boardState, const SquarePosition position) const;
 };
 
 class PieceInstance {
