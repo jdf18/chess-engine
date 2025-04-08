@@ -9,6 +9,8 @@ std::unordered_map<uint64_t, uint64_t> rank_masks = get_rank_mask();
 std::unordered_map<uint64_t, uint64_t> diag_masks_ne = get_diag_mask_ne();
 std::unordered_map<uint64_t, uint64_t> diag_masks_nw = get_diag_mask_nw();
 std::unordered_map<uint16_t, uint8_t> rank_attacks_map = get_rank_attacks();
+std::unordered_map<std::bitset<128>, uint64_t> diag_attacks_ne;
+std::unordered_map<std::bitset<128>, uint64_t> diag_attacks_nw;
 
 // Creates a hash table mapping every (individual) square to its rank
 std::unordered_map<uint64_t, uint64_t> get_rank_mask() {
@@ -170,6 +172,95 @@ std::unordered_map<uint16_t, uint8_t> get_rank_attacks() {
 		square++;
 	}
 	return map;
+}
+
+std::unordered_map<std::bitset<128>, uint64_t> get_diag_attacks_ne() {
+
+	// Start with the piece on the first square.
+	uint64_t piece_pos = 1;
+	
+	// Keep track of the index of the square the piece is on (this is useful later)
+	int piece_idx = 0;
+
+	//Create the hash table we will use.
+	std::unordered_map<std::bitset<128>, uint64_t> output = {};
+
+	// Loop once for each piece position
+	while (piece_pos > 0) {
+		//Get the diagonal that the piece is on, and count the number of squares
+		uint64_t diagonal = diag_masks_ne[piece_pos];
+		int diag_length = std::bitset<64>(diagonal).count();
+
+		//Get the position of the first square in the diagonal (bottom-left square on the board on this diagonal), store it in first_pos
+		int first_pos = 0;
+		uint64_t diag_copy = diagonal;
+		while ((diag_copy & 1) == 0) {
+			diag_copy >>= 1;
+			first_pos++;
+		}
+
+		//Loop through every possible board occupancy for the diagonal that the square is on
+		for (int i = 0; i < pow(2, diag_length); i++) {
+			uint64_t occupancy = 0;
+			//j is a bit which masks the bits we want from i, so we can spread i along the diagonal.
+			uint8_t j = 1;
+			int shift_num = 0;
+			//Loop until we have gone through every square in the diagonal
+			while (shift_num < diag_length) {
+				//mask the bit we want from i (the occupancy), shift it to the least significant spot, then left shift it to where we want.
+				occupancy |= ((uint64_t)((i & j) >> shift_num)) << (first_pos + (shift_num * (BOARD_ROW + BOARD_COL)));
+				
+				//Then j is shifted by 1 to be the next bit, and shift_num is incremented so we go to the next square on the diagonal.
+				j <<= 1;
+				shift_num += 1;
+			}
+			// Create the key
+			std::bitset<128> key;
+			// Set the first 64 bits to the square of the piece
+			key.set(piece_idx + 64);
+			// Set the next 64 bits to the occupancy we're working with
+			for (int k = 0; k < 64; k++) {
+				key.set(k, (occupancy >> k) & 1);
+			}
+			
+			int left_squares = (piece_idx - first_pos) / 9; // Get the number of squares to the left/right of the piece on the diagonal
+			int right_squares = diag_length - left_squares - 1; // take 1 since we don't count the square the piece is on
+
+			//Create a copy of the piece_pos bit, which will travel left and right, checking against the occupancy.
+			uint64_t pos_copy = piece_pos >> 9;
+
+			//Create our bitboard, which will represent the squares attacked by the piece on this diagonal.
+			uint64_t attacks = 0;
+
+			//Repeat once for each square to the left (down-left diagonally) of the piece
+			for (int k = 0; k < left_squares; k++) {
+				//Add the pos-copy to the attacks. We want to include ther square of the piece we 'hit' in our attacks vector,
+				//so we can add it before we check if the square is occupied
+				attacks |= pos_copy;
+
+				//break if the square we just added is occupied
+				if ((pos_copy & occupancy) != 0) {
+					break;
+				}
+
+				//If not occupied, we go to the next square and repeat.
+				pos_copy >>= 9;
+			}
+
+			//The logic for this is the same as for the left, but just travelling in the opposite direction.
+			pos_copy = piece_pos << 9;
+			for (int k = 0; k < right_squares; k++) {
+				attacks |= pos_copy;
+				if ((pos_copy & occupancy) != 0) {
+					break;
+				}
+				pos_copy >>= 9;
+			}
+
+			//Insert the key and attacks.
+			output.insert({ key, attacks });
+		}
+	}
 }
 
 //uint16_t BoardState::get_file_key(uint64_t piece_square) {
