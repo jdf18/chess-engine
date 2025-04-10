@@ -5,7 +5,8 @@
 
 typedef enum {
     COL_BLACK,
-    COL_WHITE
+    COL_WHITE,
+    COL_NONE
 } Colour;
 
 typedef enum {
@@ -14,7 +15,8 @@ typedef enum {
     PIECE_ROOK,
     PIECE_KNIGHT,
     PIECE_BISHOP,
-    PIECE_PAWN
+    PIECE_PAWN,
+    PIECE_NONE
 } Pieces;
 
 typedef struct SquarePosition {

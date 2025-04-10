@@ -70,6 +70,8 @@ struct BoardState {
     BitBoard pseudo_legal_bishop_moves(Colour colour);
     BitBoard pseudo_legal_pawn_moves(Colour colour);
 
+    PieceInstance get_piece(uint8_t row, uint8_t column);
+
     BoardState(const BoardState& copy) {
         pieces_white = copy.pieces_white;
         pieces_black = copy.pieces_black;
