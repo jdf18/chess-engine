@@ -24,7 +24,7 @@ public:
     std::unique_ptr<Piece> piece{};
     SquarePosition position{};
 
-    PieceInstance() : piece(std::make_unique<Piece>(COL_WHITE, PIECE_PAWN)) {};
+    PieceInstance() : piece(std::make_unique<Piece>(COL_NONE, PIECE_NONE)) {};
     PieceInstance(const PieceInstance& copy) : piece(std::make_unique<Piece>(copy.piece->colour, copy.piece->type)) {};
     PieceInstance(std::unique_ptr<Piece> piece, const SquarePosition position) : piece(std::move(piece)), position(position) {};
 
