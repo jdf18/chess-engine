@@ -17,6 +17,7 @@ int main() {
     initial_state.pieces_pawns = SECOND_RANK | SEVENTH_RANK;
 
     initial_state.print();
+    std::cout << std::endl << initial_state.get_fen();
 
     return 0;
 }
