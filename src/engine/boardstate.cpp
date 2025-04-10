@@ -9,8 +9,23 @@ std::unordered_map<uint64_t, uint64_t> rank_masks = get_rank_mask();
 std::unordered_map<uint64_t, uint64_t> diag_masks_ne = get_diag_mask_ne();
 std::unordered_map<uint64_t, uint64_t> diag_masks_nw = get_diag_mask_nw();
 std::unordered_map<uint16_t, uint8_t> rank_attacks_map = get_rank_attacks();
-std::unordered_map<std::bitset<128>, uint64_t> diag_attacks_ne;
-std::unordered_map<std::bitset<128>, uint64_t> diag_attacks_nw;
+std::unordered_map<std::bitset<128>, uint64_t> diag_attacks_ne = get_diag_attacks_ne();
+std::unordered_map<std::bitset<128>, uint64_t> diag_attacks_nw = get_diag_attacks_nw();
+std::unordered_map<uint64_t, int> square_to_index_map = get_square_to_index_map();
+
+
+std::unordered_map<uint64_t, int> get_square_to_index_map() {
+	std::unordered_map<uint64_t, int> map = {};
+	map.rehash(64);
+	uint64_t key = 1;
+	int index = 0;
+	while (key > 0) {
+		map.insert({ key, index });
+		key <<= 1;
+		index++;
+	}
+	return map;
+}
 
 // Creates a hash table mapping every (individual) square to its rank
 std::unordered_map<uint64_t, uint64_t> get_rank_mask() {
@@ -184,6 +199,8 @@ std::unordered_map<std::bitset<128>, uint64_t> get_diag_attacks_ne() {
 
 	//Create the hash table we will use.
 	std::unordered_map<std::bitset<128>, uint64_t> output = {};
+	//This is the number of entries. Calculated as 8 * 256 + 2 * 7 * 128 + 2 * 6 * 64 + 2 * 5 * 32 + 2 * 4 * 16 + 2 * 3 * 8 + 2 * 2 * 4 + 2 * 1 * 2.
+	output.rehash(5124);
 
 	// Loop once for each piece position
 	while (piece_pos > 0) {
@@ -194,7 +211,7 @@ std::unordered_map<std::bitset<128>, uint64_t> get_diag_attacks_ne() {
 		//Get the position of the first square in the diagonal (bottom-left square on the board on this diagonal), store it in first_pos
 		int first_pos = 0;
 		uint64_t diag_copy = diagonal;
-		while ((diag_copy & 1) == 0) {
+		while ((diag_copy & 1) == 0 && diag_copy != 0) {
 			diag_copy >>= 1;
 			first_pos++;
 		}
@@ -255,6 +272,70 @@ std::unordered_map<std::bitset<128>, uint64_t> get_diag_attacks_ne() {
 					break;
 				}
 				pos_copy >>= 9;
+			}
+
+			//Insert the key and attacks.
+			output.insert({ key, attacks });
+		}
+	}
+}
+
+std::unordered_map<std::bitset<128>, uint64_t> get_diag_attacks_nw() {
+	uint64_t piece_pos = 1;
+	int piece_idx = 0;
+	std::unordered_map<std::bitset<128>, uint64_t> output = {};
+	output.rehash(5124);
+
+	//Loop once for each piece position
+	while (piece_pos > 0) {
+		uint64_t diagonal = diag_masks_nw[piece_pos];
+		int diag_length = std::bitset<64>(diagonal).count();
+
+		int first_pos = 0;
+		uint64_t diag_copy = diagonal;
+		while ((diag_copy & 1) == 0 && diag_copy != 0) {
+			first_pos++;
+			diag_copy >>= 1;
+		}
+		for (int i = 0; i < pow(2, diag_length); i++) {
+			uint64_t occupancy = 0;
+			uint8_t j = 1;
+			int shift_num = 0;
+			while (shift_num < diag_length) {
+				occupancy |= ((uint64_t)((i & j) >> shift_num)) << (first_pos + (shift_num * (BOARD_ROW - BOARD_COL)));
+				j <<= 1;
+				shift_num += 1;
+			}
+
+			std::bitset<128> key;
+			key.set(piece_idx + 64);
+			for (int k = 0; k < 64; k++) {
+				key.set(k, (occupancy >> k) & 1);
+			}
+
+			int right_squares = (piece_idx - first_pos) / 7;
+			int left_squares = diag_length - right_squares - 1;
+
+			uint64_t pos_copy = piece_pos >> 7;
+
+			uint64_t attacks = 0;
+
+			for (int k = 0; k < right_squares; k++) {
+				attacks |= pos_copy;
+
+				if ((pos_copy & occupancy) != 0) {
+					break;
+				}
+				pos_copy >>= 7;
+			}
+
+			pos_copy = piece_pos << 7;
+			for (int k = 0; k < left_squares; k++) {
+				attacks |= pos_copy;
+				if ((pos_copy & occupancy) != 0) {
+					break;
+				}
+				pos_copy >>= 7;
 			}
 
 			//Insert the key and attacks.
