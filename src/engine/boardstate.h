@@ -2,10 +2,56 @@
 #define BOARDSTATE_H
 
 #include <cstdint>
+#include <memory>
 #include <unordered_map>
+#include <string>
 
 #include "pieces.h"
+#include "piece.h"
 #include "bitboard.h"
+
+#define PIECE_ARRAY_KING 0
+#define PIECE_ARRAY_QUEEN 1
+#define PIECE_ARRAY_ROOK_LEFT 2
+#define PIECE_ARRAY_ROOK_RIGHT 3
+#define PIECE_ARRAY_BISHOP_LEFT 4
+#define PIECE_ARRAY_BISHOP_RIGHT 5
+#define PIECE_ARRAY_KNIGHT_LEFT 6
+#define PIECE_ARRAY_KNIGHT_RIGHT 7
+#define PIECE_ARRAY_PAWN_LEFTMOST 8
+#define PIECE_ARRAY_PAWN_RIGHTMOST 15
+
+#define PIECE_ARRAY_WHITE_OFFSET 0
+#define PIECE_ARRAY_WHITE_KING              (PIECE_ARRAY_WHITE_OFFSET + PIECE_ARRAY_KING)
+#define PIECE_ARRAY_WHITE_QUEEN             (PIECE_ARRAY_WHITE_OFFSET + PIECE_ARRAY_QUEEN)
+#define PIECE_ARRAY_WHITE_ROOK_LEFT         (PIECE_ARRAY_WHITE_OFFSET + PIECE_ARRAY_ROOK_LEFT)
+#define PIECE_ARRAY_WHITE_ROOK_RIGHT        (PIECE_ARRAY_WHITE_OFFSET + PIECE_ARRAY_ROOK_RIGHT)
+#define PIECE_ARRAY_WHITE_BISHOP_LEFT       (PIECE_ARRAY_WHITE_OFFSET + PIECE_ARRAY_BISHOP_LEFT)
+#define PIECE_ARRAY_WHITE_BISHOP_RIGHT      (PIECE_ARRAY_WHITE_OFFSET + PIECE_ARRAY_BISHOP_RIGHT)
+#define PIECE_ARRAY_WHITE_KNIGHT_LEFT       (PIECE_ARRAY_WHITE_OFFSET + PIECE_ARRAY_KNIGHT_LEFT)
+#define PIECE_ARRAY_WHITE_KNIGHT_RIGHT      (PIECE_ARRAY_WHITE_OFFSET + PIECE_ARRAY_KNIGHT_RIGHT)
+#define PIECE_ARRAY_WHITE_PAWN_LEFTMOST     (PIECE_ARRAY_WHITE_OFFSET + PIECE_ARRAY_PAWN_LEFTMOST)
+#define PIECE_ARRAY_WHITE_PAWN_RIGHTMOST    (PIECE_ARRAY_WHITE_OFFSET + PIECE_ARRAY_PAWN_RIGHTMOST)
+
+#define PIECE_ARRAY_BLACK_OFFSET 16
+#define PIECE_ARRAY_BLACK_KING              (PIECE_ARRAY_BLACK_OFFSET + PIECE_ARRAY_KING)
+#define PIECE_ARRAY_BLACK_QUEEN             (PIECE_ARRAY_BLACK_OFFSET + PIECE_ARRAY_QUEEN)
+#define PIECE_ARRAY_BLACK_ROOK_LEFT         (PIECE_ARRAY_BLACK_OFFSET + PIECE_ARRAY_ROOK_LEFT)
+#define PIECE_ARRAY_BLACK_ROOK_RIGHT        (PIECE_ARRAY_BLACK_OFFSET + PIECE_ARRAY_ROOK_RIGHT)
+#define PIECE_ARRAY_BLACK_BISHOP_LEFT       (PIECE_ARRAY_BLACK_OFFSET + PIECE_ARRAY_BISHOP_LEFT)
+#define PIECE_ARRAY_BLACK_BISHOP_RIGHT      (PIECE_ARRAY_BLACK_OFFSET + PIECE_ARRAY_BISHOP_RIGHT)
+#define PIECE_ARRAY_BLACK_KNIGHT_LEFT       (PIECE_ARRAY_BLACK_OFFSET + PIECE_ARRAY_KNIGHT_LEFT)
+#define PIECE_ARRAY_BLACK_KNIGHT_RIGHT      (PIECE_ARRAY_BLACK_OFFSET + PIECE_ARRAY_KNIGHT_RIGHT)
+#define PIECE_ARRAY_BLACK_PAWN_LEFTMOST     (PIECE_ARRAY_BLACK_OFFSET + PIECE_ARRAY_PAWN_LEFTMOST)
+#define PIECE_ARRAY_BLACK_PAWN_RIGHTMOST    (PIECE_ARRAY_BLACK_OFFSET + PIECE_ARRAY_PAWN_RIGHTMOST)
+
+#define SET_PIECE_IN_ARRAY(arr, offset, type, file) \
+do { \
+    arr[PIECE_ARRAY_WHITE_##offset].piece = std::make_unique<Piece>(COL_WHITE, PIECE_##type); \
+    arr[PIECE_ARRAY_WHITE_##offset].position = SquarePosition{0, file}; \
+    arr[PIECE_ARRAY_BLACK_##offset].piece = std::make_unique<Piece>(COL_BLACK, PIECE_##type); \
+    arr[PIECE_ARRAY_BLACK_##offset].position = SquarePosition{7, file}; \
+}while(0)
 
 std::unordered_map<uint64_t, uint64_t> get_file_mask();
 std::unordered_map<uint64_t, uint64_t> get_rank_mask();
@@ -34,7 +80,34 @@ std::unordered_map<uint16_t, uint8_t> get_rank_attacks();
 //     pieces_bishops: Has a bit where all the bishops are.
 //     pieces_pawns: Has a bit where all the pawns are.
 
+class PieceInstance;
+
+struct CastlingAvailability {
+    union {
+        struct {
+            bool white_kingside;
+            bool white_queenside;
+            bool black_kingside;
+            bool black_queenside;
+        };
+        std::bitset<4> state;
+    };
+
+    CastlingAvailability() {
+        white_kingside = true;
+        white_queenside = true;
+        black_kingside = true;
+        black_queenside = true;
+    }
+
+    CastlingAvailability(const CastlingAvailability& copy) {
+        state = copy.state;
+    }
+};
+
 struct BoardState {
+    PieceInstance pieces[36];
+
     BitBoard pieces_white;
     BitBoard pieces_black;
 
@@ -45,11 +118,15 @@ struct BoardState {
     BitBoard pieces_bishops;
     BitBoard pieces_pawns;
 
-    // TODO: possibly add a uint8_t for if a pawn moved 2 spaces in 
-    //   that column on the last move, to check if en-passant is possible
+    bool white_to_move;
 
-    // TODO: track castling rights (if the rooks have ever moved, or king)
-    //   uint8_t (4 bits needed, one for each possible castle)
+    CastlingAvailability castling_state;
+
+    std::optional<Move> previous_move;
+
+    // todo: 50 move rule
+
+    // todo: check for repeated positions
 
     // Returns true if there is a piece on the square 
     //   (or any of the squares) given by bitboard 'square'.
@@ -63,6 +140,68 @@ struct BoardState {
     BitBoard pseudo_legal_knights_moves(Colour colour);
     BitBoard pseudo_legal_bishop_moves(Colour colour);
     BitBoard pseudo_legal_pawn_moves(Colour colour);
+
+    PieceInstance get_piece(uint8_t row, uint8_t column);
+
+    void print();
+    std::string get_fen();
+
+    BoardState(const BoardState& copy) :
+        pieces_white(copy.pieces_white),
+        pieces_black(copy.pieces_black),
+        pieces_kings(copy.pieces_kings),
+        pieces_queens(copy.pieces_queens),
+        pieces_rooks(copy.pieces_rooks),
+        pieces_bishops(copy.pieces_bishops),
+        pieces_knights(copy.pieces_knights),
+        pieces_pawns(copy.pieces_pawns),
+        castling_state(copy.castling_state),
+        white_to_move(copy.white_to_move),
+        previous_move(copy.previous_move)
+    {
+        for (int i = 0; i < 36; i++) {
+            pieces[i].piece = std::make_unique<Piece>(copy.pieces[i].piece->colour, copy.pieces[i].piece->type);
+            pieces[i].position = copy.pieces[i].position;
+        }
+    };
+    BoardState() :
+        pieces_white(0),
+        pieces_black(0),
+        pieces_kings(0),
+        pieces_queens(0),
+        pieces_rooks(0),
+        pieces_bishops(0),
+        pieces_knights(0),
+        pieces_pawns(0),
+        white_to_move(true) {}
+
+    void setup_default() {
+        pieces_white = FIRST_RANK | SECOND_RANK;
+        pieces_black = EIGHTH_RANK | SEVENTH_RANK;
+        pieces_kings = (FIRST_RANK | EIGHTH_RANK) & FIFTH_FILE;
+        pieces_queens = (FIRST_RANK | EIGHTH_RANK) & FOURTH_FILE;
+        pieces_rooks = (FIRST_RANK | EIGHTH_RANK) & (FIRST_FILE | EIGHTH_FILE);
+        pieces_bishops = (FIRST_RANK | EIGHTH_RANK) & (THIRD_FILE | SIXTH_FILE);
+        pieces_knights = (FIRST_RANK | EIGHTH_RANK) & (SECOND_FILE | SEVENTH_FILE);
+        pieces_pawns = SECOND_RANK | SEVENTH_RANK;
+        white_to_move = true;
+
+        SET_PIECE_IN_ARRAY(pieces, KING, KING, 3);
+        SET_PIECE_IN_ARRAY(pieces, QUEEN, QUEEN, 4);
+        SET_PIECE_IN_ARRAY(pieces, ROOK_LEFT, ROOK, 0);
+        SET_PIECE_IN_ARRAY(pieces, ROOK_RIGHT, ROOK, 7);
+        SET_PIECE_IN_ARRAY(pieces, BISHOP_LEFT, BISHOP, 1);
+        SET_PIECE_IN_ARRAY(pieces, BISHOP_RIGHT, BISHOP, 6);
+        SET_PIECE_IN_ARRAY(pieces, KNIGHT_LEFT, KNIGHT, 2);
+        SET_PIECE_IN_ARRAY(pieces, KNIGHT_RIGHT, KNIGHT, 5);
+
+        for (uint8_t i = 0; i < 7; i++) {
+            pieces[PIECE_ARRAY_WHITE_PAWN_LEFTMOST + i].piece = std::make_unique<Piece>(COL_WHITE, PIECE_PAWN);
+            pieces[PIECE_ARRAY_WHITE_PAWN_LEFTMOST + i].position = SquarePosition{1, i};
+            pieces[PIECE_ARRAY_BLACK_PAWN_LEFTMOST + i].piece = std::make_unique<Piece>(COL_BLACK, PIECE_PAWN);
+            pieces[PIECE_ARRAY_BLACK_PAWN_LEFTMOST + i].position = SquarePosition{6, i};
+        }
+    }
 };
 
 #endif //BOARDSTATE_H
