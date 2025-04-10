@@ -72,6 +72,8 @@ struct BoardState {
 
     PieceInstance get_piece(uint8_t row, uint8_t column);
 
+    void print();
+
     BoardState(const BoardState& copy) {
         pieces_white = copy.pieces_white;
         pieces_black = copy.pieces_black;

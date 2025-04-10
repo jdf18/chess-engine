@@ -5,22 +5,18 @@
 
 int main() {
     BoardState initial_state;
-    initial_state.pieces_knights = 0x0001000000001000;
-    initial_state.pieces_white = initial_state.pieces_knights;
 
-    BitBoard possible_moves = initial_state.pseudo_legal_knights_moves(COL_WHITE);
+    initial_state.pieces_white = FIRST_RANK | SECOND_RANK;
+    initial_state.pieces_black = EIGHTH_RANK | SEVENTH_RANK;
 
-    initial_state.pieces_knights.out();
+    initial_state.pieces_kings = (FIRST_RANK | EIGHTH_RANK) & FIFTH_FILE;
+    initial_state.pieces_queens = (FIRST_RANK | EIGHTH_RANK) & FOURTH_FILE;
+    initial_state.pieces_rooks = (FIRST_RANK | EIGHTH_RANK) & (FIRST_FILE | EIGHTH_FILE);
+    initial_state.pieces_bishops = (FIRST_RANK | EIGHTH_RANK) & (THIRD_FILE | SIXTH_FILE);
+    initial_state.pieces_knights = (FIRST_RANK | EIGHTH_RANK) & (SECOND_FILE | SEVENTH_FILE);
+    initial_state.pieces_pawns = SECOND_RANK | SEVENTH_RANK;
 
-    std::cout << std::endl;
-
-    possible_moves.out();
-
-    std::cout << std::endl;
-
-    std::unordered_map<uint16_t, uint8_t> rank_attacks = get_rank_attacks();
-
-    std::cout << std::bitset<8>(rank_attacks[0x08C3]).to_string() << std::endl;
+    initial_state.print();
 
     return 0;
 }
