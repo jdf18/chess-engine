@@ -811,4 +811,161 @@ BitBoard BoardState::pseudo_legal_king_moves(Colour colour) {
 	out |= translate(king, 0, -1);
 	out &= ~friendly_pieces;
 	return out;
+
+PieceInstance BoardState::get_piece(uint8_t row, uint8_t column) {
+	const BitBoard square_mask = (static_cast<uint64_t>(0x1) << (row + (8 * column)));
+	Colour piece_colour;
+
+	if ((pieces_white & square_mask).board != 0) {
+		piece_colour = COL_WHITE;
+	} else if ((pieces_black & square_mask).board != 0) {
+		piece_colour = COL_BLACK;
+	} else {
+		return PieceInstance{std::make_unique<Piece>(COL_NONE, PIECE_NONE), SquarePosition{row, column}};
+	}
+
+	if ((pieces_kings & square_mask).board != 0) {
+		return PieceInstance{std::make_unique<Piece>(piece_colour, PIECE_KING), SquarePosition{row, column}};
+	} else if ((pieces_queens & square_mask).board != 0) {
+		return PieceInstance{std::make_unique<Piece>(piece_colour, PIECE_QUEEN), SquarePosition{row, column}};
+	} else if ((pieces_rooks & square_mask).board != 0) {
+		return PieceInstance{std::make_unique<Piece>(piece_colour, PIECE_ROOK), SquarePosition{row, column}};
+	} else if ((pieces_bishops & square_mask).board != 0) {
+		return PieceInstance{std::make_unique<Piece>(piece_colour, PIECE_BISHOP), SquarePosition{row, column}};
+	} else if ((pieces_knights & square_mask).board != 0) {
+		return PieceInstance{std::make_unique<Piece>(piece_colour, PIECE_KNIGHT), SquarePosition{row, column}};
+	} else if ((pieces_pawns & square_mask).board != 0) {
+		return PieceInstance{std::make_unique<Piece>(piece_colour, PIECE_PAWN), SquarePosition{row, column}};
+	} else {
+		return PieceInstance{std::make_unique<Piece>(piece_colour, PIECE_NONE), SquarePosition{row, column}};
+	}
+}
+
+void BoardState::print() {
+	for (uint8_t column = 0; column < 8; column++) {
+		for (uint8_t row = 0; row < 8; row++) {
+			const PieceInstance piece_instance = get_piece(row, column);
+			char piece_character = ' ';
+			switch (piece_instance.piece->type) {
+				case PIECE_KING:
+					piece_character = 'k';
+					break;
+				case PIECE_QUEEN:
+					piece_character = 'q';
+					break;
+				case PIECE_ROOK:
+					piece_character = 'r';
+					break;
+				case PIECE_BISHOP:
+					piece_character = 'b';
+					break;
+				case PIECE_KNIGHT:
+					piece_character = 'n';
+					break;
+				case PIECE_PAWN:
+					piece_character = 'p';
+					break;
+				case PIECE_NONE:
+					piece_character = ' ';
+			}
+
+			if (piece_instance.piece->colour == COL_WHITE) {
+				piece_character = static_cast<char>(toupper(piece_character));
+			} else if (piece_instance.piece->colour == COL_BLACK) {
+				piece_character = static_cast<char>(tolower(piece_character));
+			}
+			std::cout << piece_character;
+		}
+		std::cout << std::endl;
+	}
+}
+
+std::string BoardState::get_fen() {
+	std::string fen;
+	for (uint8_t column = 0; column < 8; column++) {
+		for (uint8_t row = 0; row < 8; row++) {
+			const PieceInstance piece_instance = get_piece(row, column);
+			char piece_character = ' ';
+			switch (piece_instance.piece->type) {
+				case PIECE_KING:
+					piece_character = 'k';
+				break;
+				case PIECE_QUEEN:
+					piece_character = 'q';
+				break;
+				case PIECE_ROOK:
+					piece_character = 'r';
+				break;
+				case PIECE_BISHOP:
+					piece_character = 'b';
+				break;
+				case PIECE_KNIGHT:
+					piece_character = 'n';
+				break;
+				case PIECE_PAWN:
+					piece_character = 'p';
+				break;
+				case PIECE_NONE:
+					piece_character = '1';
+					while (get_piece(row+1, column).piece->type == PIECE_NONE && (row + 1) < 8) {
+						row++;
+						piece_character++;
+					}
+			}
+
+			if (piece_instance.piece->colour == COL_WHITE) {
+				piece_character = static_cast<char>(toupper(piece_character));
+			} else if (piece_instance.piece->colour == COL_BLACK) {
+				piece_character = static_cast<char>(tolower(piece_character));
+			}
+			fen.push_back(piece_character);
+		}
+		if (!(column == 7)) {
+			fen.push_back('/');
+		}
+	}
+	fen.push_back(' ');
+
+	fen.push_back(white_to_move ? 'w' : 'b');
+	fen.push_back(' ');
+
+	// Castling availability
+	if (castling_state.white_kingside) {
+		fen.push_back('K');
+	}
+	if (castling_state.white_queenside) {
+		fen.push_back('Q');
+	}
+	if (castling_state.black_kingside) {
+		fen.push_back('k');
+	}
+	if (castling_state.black_queenside) {
+		fen.push_back('q');
+	}
+	if (castling_state.state == 0) {
+		fen.push_back('-');
+	}
+	fen.push_back(' ');
+
+	// En passant target square
+	if (previous_move.has_value()) {
+		if ((previous_move.value().new_position.get_bitboard_mask() & pieces_pawns).board != 0 &&
+			previous_move.value().new_position.row == (white_to_move ? 4 : 3) && previous_move.value().old_position.row == (white_to_move ? 6 : 1)) {
+			const SquarePosition en_passant_target_square{
+				static_cast<uint8_t>(previous_move.value().old_position.row + (white_to_move ? -1 : 1)),
+				previous_move.value().old_position.column
+			};
+			fen.push_back(en_passant_target_square.get_square_name().file);
+			fen.push_back(en_passant_target_square.get_square_name().rank);
+		} else {
+			fen.push_back('-');
+		}
+	} else {
+		fen.push_back('-');
+	}
+
+	// todo Halfmove clock
+	// todo Fullmove number
+
+	return fen;
 }
