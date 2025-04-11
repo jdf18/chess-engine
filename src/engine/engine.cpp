@@ -6,7 +6,7 @@
 int main() {
     BoardState initial_state;
     initial_state.setup_default();
-  
+
     initial_state.print();
     std::cout << std::endl << initial_state.get_fen();
 
