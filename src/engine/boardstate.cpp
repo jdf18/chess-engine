@@ -811,6 +811,7 @@ BitBoard BoardState::pseudo_legal_king_moves(Colour colour) {
 	out |= translate(king, 0, -1);
 	out &= ~friendly_pieces;
 	return out;
+}
 
 PieceInstance BoardState::get_piece(uint8_t row, uint8_t column) {
 	const BitBoard square_mask = (static_cast<uint64_t>(0x1) << (row + (8 * column)));
