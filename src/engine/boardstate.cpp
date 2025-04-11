@@ -9,8 +9,8 @@ std::unordered_map<uint64_t, uint64_t> rank_masks = get_rank_mask();
 std::unordered_map<uint64_t, uint64_t> diag_masks_ne = get_diag_mask_ne();
 std::unordered_map<uint64_t, uint64_t> diag_masks_nw = get_diag_mask_nw();
 std::unordered_map<uint16_t, uint8_t> rank_attacks_map = get_rank_attacks();
-std::unordered_map<std::bitset<128>, uint64_t> diag_attacks_ne = get_diag_attacks_ne();
-std::unordered_map<std::bitset<128>, uint64_t> diag_attacks_nw = get_diag_attacks_nw();
+std::unordered_map<uint16_t, uint64_t> diag_attacks_ne = get_diag_attacks_ne_better();
+std::unordered_map<uint16_t, uint64_t> diag_attacks_nw = get_diag_attacks_nw_better();
 std::unordered_map<uint64_t, int> square_to_index_map = get_square_to_index_map();
 
 
@@ -344,6 +344,177 @@ std::unordered_map<std::bitset<128>, uint64_t> get_diag_attacks_nw() {
 	}
 }
 
+std::unordered_map<uint16_t, uint64_t> get_diag_attacks_ne_better() {
+	//setup the piece index and piece pos.
+	//the piece index is the index of the piece within the bitboard, and piece pos is the actual bitboard for the piece.
+	uint8_t piece_index = 0;
+	uint64_t piece_pos = 1;
+
+	//Setup the hash table
+	std::unordered_map<uint16_t, uint64_t> map = {};
+
+	//Loop once for each piece position
+	while (piece_pos > 0) {
+		//Get the diagonal that the piece is on, and count the number of squares.
+		uint64_t diag = diag_masks_ne[piece_pos];
+		uint8_t diag_length = std::bitset<64>(diag).count();
+
+		//Get the index of the first square in the diagonal
+		uint8_t first_index = 0;
+		uint64_t diag_copy = diag;
+		while ((diag_copy & 1) == 0 && diag_copy != 0) {
+			first_index++;
+			diag_copy >>= 1;
+		}
+
+		//Repeat once for each possible occupancy
+		for (uint8_t occupancy = 0; occupancy < pow(2, diag_length); occupancy++) {
+			//Get the number of squares to the left of our piece, and the number of squares to its right.
+			uint8_t left_squares = (piece_index - first_index) / 9;
+			uint8_t right_squares = diag_length - left_squares - 1;
+			
+			//Setup j, which will be a generic variable, a single bit shifted left and right for masking and such.
+			//j starts one space to the left of our piece, within the 8-bit occupancy space.
+			uint8_t j;
+			if (left_squares > 0) {
+				j = 1 << (left_squares - 1);
+			} 
+			else {
+				j = 0;
+			}
+			//Get the attacks
+			uint8_t attacks = 0;
+
+			//Repeat once for each square to the left of our piece.
+			for (int i = 0; i < left_squares; i++) {
+
+				//Add the bit represented by j, then break if there is a piece at that location.
+				attacks |= j;
+				if ((j & occupancy) != 0) {
+					break;
+				}
+
+				//Move left one (by right shifting)
+				j >>= 1;
+			}
+
+			//Set j up to be one square to the right of our piece.
+			if (left_squares < 7) {
+				j = 1 << (left_squares + 1);
+			}
+			else {
+				j = 0;
+			}
+
+			//Repeat once for each square to the right of our piece.
+			for (int i = 0; i < right_squares; i++) {
+
+				//Add the bit represented by j, then break if there is a piece at that location.
+				attacks |= j;
+				if ((j & occupancy) != 0) {
+					break;
+				}
+
+				//Move right one (by left shifting)
+				j <<= 1;
+			}
+
+			//Create the key for our entry. The first 8 bits is just the index of the piece.
+			uint16_t key = (uint16_t)(piece_index) << 8;
+			//The second 8 bits is the 8-bit (or smaller) occupancy value.
+			key |= occupancy;
+
+			//Now create the value for our entry.
+			uint64_t output = 0;
+			uint8_t shift_num = 0;
+
+			//j is used again, this time to go from least significant to most significant bit of our attacks, spacing them out correctly over the diagonal.
+			j = 1;
+
+			//Repeat once for each square on the diagonal
+			while (shift_num < diag_length) {
+				//Get the correct bit of the attacks, shift so it's the least significant bit, then left shift it to the right place on the diagonal.
+				output |= (uint64_t)((attacks & j) >> shift_num) << (first_index + (shift_num * (BOARD_ROW + BOARD_COL)));
+
+				//Now increment shift num, and left shift j by 1.
+				shift_num++;
+				j <<= 1;
+			}
+
+			//Insert the key and value into the table.
+			map.insert({ key, output });
+		}
+
+		//Left shift the piece by 1, moving to the next square, and increment the piece index.
+		piece_pos <<= 1;
+		piece_index++;
+	}
+}
+
+std::unordered_map<uint16_t, uint64_t> get_diag_attacks_nw_better() {
+	uint8_t piece_index = 0;
+	uint64_t piece_pos = 1;
+
+	std::unordered_map<uint16_t, uint64_t> map = {};
+
+	while (piece_pos > 0) {
+		uint64_t diag = diag_masks_ne[piece_pos];
+		uint8_t diag_length = std::bitset<64>(diag).count();
+		uint8_t first_index = 0;
+		uint64_t diag_copy = diag;
+		while ((diag_copy & 1) == 0 && diag_copy != 0) {
+			first_index++;
+			diag_copy >>= 1;
+		}
+		for (uint8_t occupancy = 0; occupancy < pow(2, diag_length); occupancy++) {
+			uint8_t right_squares = (piece_index - first_index) / 7;
+			uint8_t left_squares = diag_length - right_squares - 1;
+			uint8_t j;
+			if (right_squares > 0) {
+				j = 1 << (right_squares - 1);
+			}
+			else {
+				j = 0;
+			}
+			uint8_t attacks = 0;
+			for (int i = 0; i < right_squares; i++) {
+				attacks |= j;
+				if ((j & occupancy) != 0) {
+					break;
+				}
+				j >>= 1;
+			}
+			if (right_squares < 7) {
+				j = 1 << (right_squares + 1);
+			}
+			else {
+				j = 0;
+			}
+			for (int i = 0; i < left_squares; i++) {
+				attacks |= j;
+				if ((j & occupancy) != 0) {
+					break;
+				}
+				j <<= 1;
+			}
+			uint16_t key = (uint16_t)(piece_index) << 8;
+			key |= occupancy;
+			uint64_t output = 0;
+			uint8_t shift_num = 0;
+			j = 1;
+			while (shift_num < diag_length) {
+				output |= (uint64_t)((attacks & j) >> shift_num) << (first_index + (shift_num * (BOARD_ROW - BOARD_COL)));
+				shift_num++;
+				j <<= 1;
+			}
+			map.insert({ key, output });
+		}
+
+		piece_pos <<= 1;
+		piece_index++;
+	}
+}
+
 //uint16_t BoardState::get_file_key(uint64_t piece_square) {
 //	//Get the occupancy for the whole board
 //	uint64_t board_occupancy = pieces_white.board | pieces_black.board;
@@ -564,4 +735,67 @@ BitBoard BoardState::pseudo_legal_rook_moves(Colour colour, BitBoard square) {
 
 	return (rank_attacks | file_attacks) & ~friendly_pieces;
 
+}
+
+BitBoard BoardState::pseudo_legal_bishop_moves(Colour colour, BitBoard square) {
+	uint64_t friendly_pieces = (colour == COL_WHITE ? pieces_white.board : pieces_black.board);
+	uint64_t all_pieces = pieces_white.board | pieces_black.board;
+	uint64_t diag_mask_ne = diag_masks_ne[square.board];
+	uint64_t diag_mask_nw = diag_masks_nw[square.board];
+
+	// Get ne attacks:
+	uint64_t ne_diag = diag_mask_ne & all_pieces;
+	uint16_t key = square_to_index_map[square.board] << 8;
+	uint8_t occupancy = 0;
+	uint8_t first_pos = 0;
+	uint8_t diag_length = std::bitset<64>(diag_mask_ne).count();
+	while ((diag_mask_ne & 1) == 0) {
+		first_pos++;
+		diag_mask_ne >>= 1;
+	}
+	for (int i = 0; i < diag_length; i++) {
+		occupancy |= ((ne_diag >> (first_pos + (i * (BOARD_ROW + BOARD_COL)))) << i) & 0xFF;
+	}
+	key |= occupancy;
+	uint64_t ne_attacks = diag_attacks_ne[key];
+
+
+	// Get nw attacks:
+	uint64_t nw_diag = diag_mask_nw & all_pieces;
+	key = square_to_index_map[square.board] << 8;
+	uint8_t occupancy = 0;
+	uint8_t first_pos = 0;
+	uint8_t diag_length = std::bitset<64>(diag_mask_nw).count();
+	while ((diag_mask_nw & 1) == 0) {
+		first_pos++;
+		diag_mask_nw >>= 1;
+	}
+	for (int i = 0; i < diag_length; i++) {
+		occupancy |= ((nw_diag >> (first_pos + (i * (BOARD_ROW - BOARD_COL)))) << i) & 0xFF;
+	}
+	key |= occupancy;
+	uint64_t nw_attacks = diag_attacks_nw[key];
+
+	//Return the attacks
+	return (ne_attacks | nw_attacks) & ~friendly_pieces;
+}
+
+BitBoard BoardState::pseudo_legal_queen_moves(Colour colour, BitBoard square) {
+	return (pseudo_legal_rook_moves(colour, square) | pseudo_legal_bishop_moves(colour, square));
+}
+
+BitBoard BoardState::pseudo_legal_king_moves(Colour colour) {
+	BitBoard out = 0;
+	BitBoard friendly_pieces = (colour == COL_WHITE ? pieces_white : pieces_black);
+	BitBoard king = pieces_kings;
+	out |= translate(king, -1, -1);
+	out |= translate(king, -1, 0);
+	out |= translate(king, -1, 1);
+	out |= translate(king, 0, 1);
+	out |= translate(king, 1, 1);
+	out |= translate(king, 1, 0);
+	out |= translate(king, 1, -1);
+	out |= translate(king, 0, -1);
+	out &= ~friendly_pieces;
+	return out;
 }
