@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <unordered_map>
+#include <cmath>
 
 
 std::unordered_map<uint64_t, uint64_t> file_masks = get_file_mask();
@@ -277,7 +278,10 @@ std::unordered_map<std::bitset<128>, uint64_t> get_diag_attacks_ne() {
 			//Insert the key and attacks.
 			output.insert({ key, attacks });
 		}
+		piece_pos >>= 1;
+		piece_idx++;
 	}
+	return output;
 }
 
 std::unordered_map<std::bitset<128>, uint64_t> get_diag_attacks_nw() {
@@ -341,7 +345,10 @@ std::unordered_map<std::bitset<128>, uint64_t> get_diag_attacks_nw() {
 			//Insert the key and attacks.
 			output.insert({ key, attacks });
 		}
+		piece_pos <<= 1;
+		piece_idx++;
 	}
+	return output;
 }
 
 std::unordered_map<uint16_t, uint64_t> get_diag_attacks_ne_better() {
@@ -352,6 +359,8 @@ std::unordered_map<uint16_t, uint64_t> get_diag_attacks_ne_better() {
 
 	//Setup the hash table
 	std::unordered_map<uint16_t, uint64_t> map = {};
+
+	map.rehash(5124);
 
 	//Loop once for each piece position
 	while (piece_pos > 0) {
@@ -368,7 +377,7 @@ std::unordered_map<uint16_t, uint64_t> get_diag_attacks_ne_better() {
 		}
 
 		//Repeat once for each possible occupancy
-		for (uint8_t occupancy = 0; occupancy < pow(2, diag_length); occupancy++) {
+		for (uint16_t occupancy = 0; occupancy < pow(2, diag_length); occupancy++) {
 			//Get the number of squares to the left of our piece, and the number of squares to its right.
 			uint8_t left_squares = (piece_index - first_index) / 9;
 			uint8_t right_squares = diag_length - left_squares - 1;
@@ -449,6 +458,7 @@ std::unordered_map<uint16_t, uint64_t> get_diag_attacks_ne_better() {
 		piece_pos <<= 1;
 		piece_index++;
 	}
+	return map;
 }
 
 std::unordered_map<uint16_t, uint64_t> get_diag_attacks_nw_better() {
@@ -457,8 +467,10 @@ std::unordered_map<uint16_t, uint64_t> get_diag_attacks_nw_better() {
 
 	std::unordered_map<uint16_t, uint64_t> map = {};
 
+	map.rehash(5124);
+
 	while (piece_pos > 0) {
-		uint64_t diag = diag_masks_ne[piece_pos];
+		uint64_t diag = diag_masks_nw[piece_pos];
 		uint8_t diag_length = std::bitset<64>(diag).count();
 		uint8_t first_index = 0;
 		uint64_t diag_copy = diag;
@@ -466,7 +478,7 @@ std::unordered_map<uint16_t, uint64_t> get_diag_attacks_nw_better() {
 			first_index++;
 			diag_copy >>= 1;
 		}
-		for (uint8_t occupancy = 0; occupancy < pow(2, diag_length); occupancy++) {
+		for (uint16_t occupancy = 0; occupancy < pow(2, diag_length); occupancy++) {
 			uint8_t right_squares = (piece_index - first_index) / 7;
 			uint8_t left_squares = diag_length - right_squares - 1;
 			uint8_t j;
@@ -476,7 +488,7 @@ std::unordered_map<uint16_t, uint64_t> get_diag_attacks_nw_better() {
 			else {
 				j = 0;
 			}
-			uint8_t attacks = 0;
+			uint8_t attacks = 0; 
 			for (int i = 0; i < right_squares; i++) {
 				attacks |= j;
 				if ((j & occupancy) != 0) {
@@ -513,6 +525,7 @@ std::unordered_map<uint16_t, uint64_t> get_diag_attacks_nw_better() {
 		piece_pos <<= 1;
 		piece_index++;
 	}
+	return map;
 }
 
 //uint16_t BoardState::get_file_key(uint64_t piece_square) {
@@ -754,7 +767,7 @@ BitBoard BoardState::pseudo_legal_bishop_moves(Colour colour, BitBoard square) {
 		diag_mask_ne >>= 1;
 	}
 	for (int i = 0; i < diag_length; i++) {
-		occupancy |= ((ne_diag >> (first_pos + (i * (BOARD_ROW + BOARD_COL)))) << i) & 0xFF;
+		occupancy |= ((ne_diag >> (first_pos + (i * (BOARD_ROW + BOARD_COL)))) << i) & (1 << i);
 	}
 	key |= occupancy;
 	uint64_t ne_attacks = diag_attacks_ne[key];
@@ -763,15 +776,15 @@ BitBoard BoardState::pseudo_legal_bishop_moves(Colour colour, BitBoard square) {
 	// Get nw attacks:
 	uint64_t nw_diag = diag_mask_nw & all_pieces;
 	key = square_to_index_map[square.board] << 8;
-	uint8_t occupancy = 0;
-	uint8_t first_pos = 0;
-	uint8_t diag_length = std::bitset<64>(diag_mask_nw).count();
+	occupancy = 0;
+	first_pos = 0;
+	diag_length = std::bitset<64>(diag_mask_nw).count();
 	while ((diag_mask_nw & 1) == 0) {
 		first_pos++;
 		diag_mask_nw >>= 1;
 	}
 	for (int i = 0; i < diag_length; i++) {
-		occupancy |= ((nw_diag >> (first_pos + (i * (BOARD_ROW - BOARD_COL)))) << i) & 0xFF;
+		occupancy |= ((nw_diag >> (first_pos + (i * (BOARD_ROW - BOARD_COL)))) << i) & (1 << i);
 	}
 	key |= occupancy;
 	uint64_t nw_attacks = diag_attacks_nw[key];
