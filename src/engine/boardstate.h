@@ -5,6 +5,7 @@
 #include <memory>
 #include <unordered_map>
 #include <string>
+#include <optional>
 
 #include "pieces.h"
 #include "piece.h"

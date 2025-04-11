@@ -297,6 +297,99 @@ BitBoard BoardState::pseudo_legal_pawn_moves(Colour colour) {
 
 }
 
+BitBoard BoardState::pseudo_legal_rook_moves(Colour colour, BitBoard square) {
+	uint64_t friendly_pieces = (colour == COL_WHITE ? pieces_white.board : pieces_black.board);
+	uint64_t all_pieces = pieces_white.board | pieces_black.board;
+	uint64_t rank_mask = rank_masks[square.board];
+	uint64_t file_mask = file_masks[square.board];
+
+	//Get rank attacks:
+	uint64_t rank_only = all_pieces & rank_mask;
+	int shift_num = 0;
+	while ((rank_only & FIRST_RANK) == 0) {
+		shift_num++;
+		rank_only >>= BOARD_ROW;
+	}
+	uint16_t rank_key = ((square.board >> (shift_num * BOARD_ROW)) << 8) | rank_only;
+	uint64_t rank_attacks = (uint64_t)rank_attacks_map[rank_key] << (shift_num * BOARD_ROW);
+
+	//Get file attacks
+	uint64_t file_only = all_pieces & file_mask;
+	shift_num = 0;
+	while((file_only & FIRST_FILE) == 0) {
+		shift_num++;
+		file_only >>= BOARD_COL;
+	}
+	uint16_t file_key = (file_to_rank(square.board >> shift_num) << 8) | file_to_rank(file_only);
+	uint64_t file_attacks = rank_to_file(rank_attacks_map[file_key]) << shift_num;
+
+	return (rank_attacks | file_attacks) & ~friendly_pieces;
+
+}
+
+BitBoard BoardState::pseudo_legal_bishop_moves(Colour colour, BitBoard square) {
+	uint64_t friendly_pieces = (colour == COL_WHITE ? pieces_white.board : pieces_black.board);
+	uint64_t all_pieces = pieces_white.board | pieces_black.board;
+	uint64_t diag_mask_ne = diag_masks_ne[square.board];
+	uint64_t diag_mask_nw = diag_masks_nw[square.board];
+
+	// Get ne attacks:
+	uint64_t ne_diag = diag_mask_ne & all_pieces;
+	uint16_t key = square_to_index_map[square.board] << 8;
+	uint8_t occupancy = 0;
+	uint8_t first_pos = 0;
+	uint8_t diag_length = std::bitset<64>(diag_mask_ne).count();
+	while ((diag_mask_ne & 1) == 0) {
+		first_pos++;
+		diag_mask_ne >>= 1;
+	}
+	for (int i = 0; i < diag_length; i++) {
+		occupancy |= ((ne_diag >> (first_pos + (i * (BOARD_ROW + BOARD_COL)))) << i) & (1 << i);
+	}
+	key |= occupancy;
+	uint64_t ne_attacks = diag_attacks_ne[key];
+
+
+	// Get nw attacks:
+	uint64_t nw_diag = diag_mask_nw & all_pieces;
+	key = square_to_index_map[square.board] << 8;
+	occupancy = 0;
+	first_pos = 0;
+	diag_length = std::bitset<64>(diag_mask_nw).count();
+	while ((diag_mask_nw & 1) == 0) {
+		first_pos++;
+		diag_mask_nw >>= 1;
+	}
+	for (int i = 0; i < diag_length; i++) {
+		occupancy |= ((nw_diag >> (first_pos + (i * (BOARD_ROW - BOARD_COL)))) << i) & (1 << i);
+	}
+	key |= occupancy;
+	uint64_t nw_attacks = diag_attacks_nw[key];
+
+	//Return the attacks
+	return (ne_attacks | nw_attacks) & ~friendly_pieces;
+}
+
+BitBoard BoardState::pseudo_legal_queen_moves(Colour colour, BitBoard square) {
+	return (pseudo_legal_rook_moves(colour, square) | pseudo_legal_bishop_moves(colour, square));
+}
+
+BitBoard BoardState::pseudo_legal_king_moves(Colour colour) {
+	BitBoard out = 0;
+	BitBoard friendly_pieces = (colour == COL_WHITE ? pieces_white : pieces_black);
+	BitBoard king = pieces_kings;
+	out |= translate(king, -1, -1);
+	out |= translate(king, -1, 0);
+	out |= translate(king, -1, 1);
+	out |= translate(king, 0, 1);
+	out |= translate(king, 1, 1);
+	out |= translate(king, 1, 0);
+	out |= translate(king, 1, -1);
+	out |= translate(king, 0, -1);
+	out &= ~friendly_pieces;
+	return out;
+}
+
 PieceInstance BoardState::get_piece(uint8_t row, uint8_t column) {
 	const BitBoard square_mask = (static_cast<uint64_t>(0x1) << (row + (8 * column)));
 	Colour piece_colour;
