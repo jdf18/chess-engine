@@ -131,7 +131,7 @@ struct BoardState {
     // Returns true if there is a piece on the square 
     //   (or any of the squares) given by bitboard 'square'.
     inline bool is_piece_on_square_mask(BitBoard squares) {
-        return (squares & (pieces_white | pieces_black)) != 0;
+        return (squares & (pieces_white | pieces_black)).board != 0;
     };
 
     BitBoard pseudo_legal_king_moves(Colour colour);
@@ -159,7 +159,7 @@ struct BoardState {
         white_to_move(copy.white_to_move),
         previous_move(copy.previous_move)
     {
-        for (int i = 0; i < 36; i++) {
+        for (int i = 0; i < 31; i++) {
             pieces[i].piece = std::make_unique<Piece>(copy.pieces[i].piece->colour, copy.pieces[i].piece->type);
             pieces[i].position = copy.pieces[i].position;
         }
@@ -176,24 +176,24 @@ struct BoardState {
         white_to_move(true) {}
 
     void setup_default() {
-        pieces_white = FIRST_RANK | SECOND_RANK;
-        pieces_black = EIGHTH_RANK | SEVENTH_RANK;
-        pieces_kings = (FIRST_RANK | EIGHTH_RANK) & FIFTH_FILE;
-        pieces_queens = (FIRST_RANK | EIGHTH_RANK) & FOURTH_FILE;
-        pieces_rooks = (FIRST_RANK | EIGHTH_RANK) & (FIRST_FILE | EIGHTH_FILE);
-        pieces_bishops = (FIRST_RANK | EIGHTH_RANK) & (THIRD_FILE | SIXTH_FILE);
-        pieces_knights = (FIRST_RANK | EIGHTH_RANK) & (SECOND_FILE | SEVENTH_FILE);
-        pieces_pawns = SECOND_RANK | SEVENTH_RANK;
+        pieces_white = BitBoard(FIRST_RANK | SECOND_RANK);
+        pieces_black = BitBoard(EIGHTH_RANK | SEVENTH_RANK);
+        pieces_kings = BitBoard((FIRST_RANK | EIGHTH_RANK) & FIFTH_FILE);
+        pieces_queens = BitBoard((FIRST_RANK | EIGHTH_RANK) & FOURTH_FILE);
+        pieces_rooks = BitBoard((FIRST_RANK | EIGHTH_RANK) & (FIRST_FILE | EIGHTH_FILE));
+        pieces_bishops = BitBoard((FIRST_RANK | EIGHTH_RANK) & (THIRD_FILE | SIXTH_FILE));
+        pieces_knights = BitBoard((FIRST_RANK | EIGHTH_RANK) & (SECOND_FILE | SEVENTH_FILE));
+        pieces_pawns = BitBoard(SECOND_RANK | SEVENTH_RANK);
         white_to_move = true;
 
         SET_PIECE_IN_ARRAY(pieces, KING, KING, 3);
         SET_PIECE_IN_ARRAY(pieces, QUEEN, QUEEN, 4);
         SET_PIECE_IN_ARRAY(pieces, ROOK_LEFT, ROOK, 0);
         SET_PIECE_IN_ARRAY(pieces, ROOK_RIGHT, ROOK, 7);
-        SET_PIECE_IN_ARRAY(pieces, BISHOP_LEFT, BISHOP, 1);
-        SET_PIECE_IN_ARRAY(pieces, BISHOP_RIGHT, BISHOP, 6);
-        SET_PIECE_IN_ARRAY(pieces, KNIGHT_LEFT, KNIGHT, 2);
-        SET_PIECE_IN_ARRAY(pieces, KNIGHT_RIGHT, KNIGHT, 5);
+        SET_PIECE_IN_ARRAY(pieces, BISHOP_LEFT, BISHOP, 2);
+        SET_PIECE_IN_ARRAY(pieces, BISHOP_RIGHT, BISHOP, 5);
+        SET_PIECE_IN_ARRAY(pieces, KNIGHT_LEFT, KNIGHT, 1);
+        SET_PIECE_IN_ARRAY(pieces, KNIGHT_RIGHT, KNIGHT, 6);
 
         for (uint8_t i = 0; i < 7; i++) {
             pieces[PIECE_ARRAY_WHITE_PAWN_LEFTMOST + i].piece = std::make_unique<Piece>(COL_WHITE, PIECE_PAWN);
