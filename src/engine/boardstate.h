@@ -146,7 +146,7 @@ struct BoardState {
     BitBoard pseudo_legal_king_moves(Colour colour);
     BitBoard pseudo_legal_queen_moves(Colour colour, BitBoard square);
     BitBoard pseudo_legal_rook_moves(Colour colour, BitBoard square);
-    BitBoard pseudo_legal_knights_moves(Colour colour);
+    BitBoard pseudo_legal_knight_moves(Colour colour);
     BitBoard pseudo_legal_bishop_moves(Colour colour, BitBoard square);
     BitBoard pseudo_legal_pawn_moves(Colour colour);
 

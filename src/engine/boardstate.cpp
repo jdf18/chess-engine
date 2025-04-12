@@ -615,7 +615,7 @@ inline BitBoard translate(BitBoard pieces, int8_t row_mod, int8_t col_mod) {
 
 // Returns all the valid squares for a knight on 'square' to move to, given 'friendly_pieces',
 // which is the position of all pieces of the same colour as the knight.
-BitBoard BoardState::pseudo_legal_knights_moves(Colour colour) {
+BitBoard BoardState::pseudo_legal_knight_moves(Colour colour) {
     BitBoard friendly_pieces = (colour == COL_WHITE ? pieces_white : pieces_black);
     BitBoard friendly_knights = pieces_knights & friendly_pieces;
 
@@ -800,7 +800,7 @@ BitBoard BoardState::pseudo_legal_queen_moves(Colour colour, BitBoard square) {
 BitBoard BoardState::pseudo_legal_king_moves(Colour colour) {
 	BitBoard out = 0;
 	BitBoard friendly_pieces = (colour == COL_WHITE ? pieces_white : pieces_black);
-	BitBoard king = pieces_kings;
+	BitBoard king = pieces_kings & friendly_pieces;
 	out |= translate(king, -1, -1);
 	out |= translate(king, -1, 0);
 	out |= translate(king, -1, 1);
