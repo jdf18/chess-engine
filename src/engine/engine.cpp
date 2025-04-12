@@ -11,7 +11,7 @@ int main() {
     std::cout << std::endl << initial_state.get_fen();
 
     BitBoard possible_moves;
-    possible_moves = initial_state.pseudo_legal_knights_moves(COL_WHITE);
+    possible_moves = initial_state.pseudo_legal_knight_moves(COL_WHITE);
 
     initial_state.pieces_knights.out();
 
