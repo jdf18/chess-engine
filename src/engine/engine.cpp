@@ -20,6 +20,7 @@ int main() {
     std::cout << tree.root->children.size() << std::endl;
     for (int i = 0; i < tree.root->children.size(); i++) {
         Move move = tree.root->children[i]->data.board_state.previous_move.value();
+        std::cout << std::endl;
         move.print();
         std::cout << std::endl;
         tree.root->children[i]->data.board_state.print();

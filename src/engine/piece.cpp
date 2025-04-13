@@ -30,7 +30,7 @@ bool conditionally_add_position_offset_to_moves_vector(
 
 void add_moves_to_vector_along_direction(
     const BoardState* board_state, const SquarePosition position, std::vector<Move>& moves,
-    const uint8_t direction_row, const uint8_t direction_column, const Colour colour) {
+    const int8_t direction_row, const int8_t direction_column, const Colour colour) {
     for (int i =0; i < 8; i++) {
         if (IS_ON_BOARD(position, i*direction_row, i*direction_column)) {
             if (!conditionally_add_position_offset_to_moves_vector(
@@ -69,6 +69,7 @@ std::vector<Move> Piece::generateMoves(const BoardState* board_state, const Squa
                 board_state, position, possible_moves, -1, 0, colour);
             conditionally_add_position_offset_to_moves_vector(
                 board_state, position, possible_moves, -1, -1, colour);
+            // Castling moves are generated in DecisionTreeNode::generate_moves
             break;
         case PIECE_KNIGHT:
             conditionally_add_position_offset_to_moves_vector(
@@ -129,15 +130,18 @@ std::vector<Move> Piece::generateMoves(const BoardState* board_state, const Squa
             break;
         case PIECE_PAWN:
             conditionally_add_position_offset_to_moves_vector(
-                board_state, position, possible_moves, (colour==COL_WHITE ? 1 : -1), 0, colour);
+                board_state, position, possible_moves, static_cast<int8_t>(colour == COL_WHITE ? 1 : -1), 0, colour);
             // todo: add condition: on first move
             conditionally_add_position_offset_to_moves_vector(
-                board_state, position, possible_moves, (colour==COL_WHITE ? 2 : -2), 0, colour);
-            // todo: add condition: if enemy piece OR en passant possible
+                board_state, position, possible_moves, static_cast<int8_t>(colour == COL_WHITE ? 2 : -2), 0, colour);
+            // todo: add condition: if enemy piece
             conditionally_add_position_offset_to_moves_vector(
-                board_state, position, possible_moves, (colour==COL_WHITE ? 1 : -1), 1, colour);
+                board_state, position, possible_moves, static_cast<int8_t>(colour == COL_WHITE ? 1 : -1), 1, colour);
             conditionally_add_position_offset_to_moves_vector(
-                board_state, position, possible_moves, (colour==COL_WHITE ? 1 : -1), -1, colour);
+                board_state, position, possible_moves, static_cast<int8_t>(colour == COL_WHITE ? 1 : -1), -1, colour);
+            // En passant will be handled in DecisionTreeNode::generate_moves
+            // Pawn promotion will also be handled in DecisionTreeNode::generate_moves, only need to return moves which
+            //   move the pawn to the final rank
             break;
         default: break;
     }
