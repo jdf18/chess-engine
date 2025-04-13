@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.10)
 
 project(Engine)
+set(CMAKE_CXX_STANDARD 17)
+
 IF(WIN32)
 set(CMAKE_C_COMPILER cl.exe)
 set(CMAKE_CXX_COMPILER cl.exe)
