@@ -90,8 +90,6 @@ void DecisionTreeNode::check_legality() {
     enemy_attack_surface |= data.board_state.pseudo_legal_knight_moves(enemy_colour);
     enemy_attack_surface |= data.board_state.pseudo_legal_pawn_moves(enemy_colour);
 
-    // todo: add possible castling and en passant moves
-
     if ((enemy_attack_surface & data.board_state.pieces_kings &
         (data.last_player == COL_WHITE ? data.board_state.pieces_white : data.board_state.pieces_black)).board == 0) {
         data.legality = NODE_LEGAL;
