@@ -1,20 +1,14 @@
 #include "decisiontree.h"
 
-bool NodeData::initialise_node() {
-    // NodeData attributes: previous_move; board_state;
-
-    // todo: generate the bitboards and test to see if the king is in check
-    // todo:   also check to see if anyone has won and set a flag on the node.
-
-    return true;
-}
-
-
 void DecisionTreeNode::add_child(NodeData child_data) {
     children.push_back(std::make_unique<DecisionTreeNode>(child_data));
 }
 
 void DecisionTreeNode::generate_moves() {
+    if (processed == NODE_CHILDREN_GENERATED) return;
+    // Don't bother generating moves if the parent move was illegal
+    if (data.legality == NODE_ILLEGAL) return;
+
     const BoardState* current_board = &data.board_state;
 
     // todo: generate possible moves for castling
@@ -77,9 +71,31 @@ void DecisionTreeNode::generate_moves() {
                 default: break;
             }
 
-            if (new_data.initialise_node()) {
-                add_child(new_data);
-            }
+            add_child(new_data);
         }
     }
+    processed = NODE_CHILDREN_GENERATED;
+}
+
+void DecisionTreeNode::check_legality() {
+    // Dont redo everything if weve already worked this out
+    if (data.legality != NODE_PSEUDO_LEGAL) return;
+
+    const Colour enemy_colour = (data.last_player == COL_WHITE ? COL_BLACK : COL_WHITE);
+    BitBoard enemy_attack_surface = 0;
+    enemy_attack_surface |= data.board_state.pseudo_legal_king_moves(enemy_colour);
+    // enemy_attack_surface |= data.board_state.pseudo_legal_queen_moves(enemy_colour);
+    // enemy_attack_surface |= data.board_state.pseudo_legal_rook_moves(enemy_colour);
+    // enemy_attack_surface |= data.board_state.pseudo_legal_bishop_moves(enemy_colour);
+    enemy_attack_surface |= data.board_state.pseudo_legal_knight_moves(enemy_colour);
+    enemy_attack_surface |= data.board_state.pseudo_legal_pawn_moves(enemy_colour);
+
+    // todo: add possible castling and en passant moves
+
+    if ((enemy_attack_surface & data.board_state.pieces_kings &
+        (data.last_player == COL_WHITE ? data.board_state.pieces_white : data.board_state.pieces_black)).board == 0) {
+        data.legality = NODE_LEGAL;
+    } else {
+        data.legality = NODE_ILLEGAL;
+    };
 }
