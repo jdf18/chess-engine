@@ -34,6 +34,7 @@
 # vs
 .vs
 CMakeSettings.json
+.idea/
 
 build/
 out/

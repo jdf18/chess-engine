@@ -16,7 +16,7 @@ public:
     Piece(const Colour colour, const Pieces type) : colour(colour), type(type) {};
     ~Piece() = default;
 
-    std::vector<Move> generateMoves(const BoardState& boardState, SquarePosition position);
+    std::vector<Move> generateMoves(const BoardState *board_state, SquarePosition position) const;
 };
 
 class PieceInstance {
@@ -28,7 +28,7 @@ public:
     PieceInstance(const PieceInstance& copy) : piece(std::make_unique<Piece>(copy.piece->colour, copy.piece->type)) {};
     PieceInstance(std::unique_ptr<Piece> piece, const SquarePosition position) : piece(std::move(piece)), position(position) {};
 
-    std::vector<Move> generateMoves(const BoardState& boardState) {
+    std::vector<Move> generateMoves(const BoardState* boardState) {
         // Calls the virtual function for the specific type of piece
         return piece->generateMoves(boardState, position);
     };

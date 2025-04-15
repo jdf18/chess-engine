@@ -8,10 +8,11 @@
 
 typedef struct NodeData {
     BoardState board_state;
-    Move previous_move;
 
     NodeData(NodeData const &copy) = default;
-    NodeData(BoardState const &board_state, Move const &previous_move) : board_state(board_state), previous_move(previous_move) {};
+    explicit NodeData(BoardState const &board_state) : board_state(board_state) {};
+
+    bool initialise_node(); // Returns if the move was valid or not
 } NodeData;
 
 typedef class DecisionTreeNode {
@@ -37,7 +38,7 @@ private:
 
 typedef class DecisionTree {
 public:
-    DecisionTreeNode root;
+    std::unique_ptr<DecisionTreeNode> root;
 } DecisionTree;
 
 #endif //DECISIONTREE_H

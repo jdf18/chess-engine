@@ -34,13 +34,16 @@ typedef struct SquarePosition {
     bool is_not_defined() const {return (row == 255) && (column == 255);};
 
     BitBoard get_bitboard_mask() const {
-        return static_cast<uint64_t>(0x1) << row + 8 * column;
+        return BitBoard(static_cast<uint64_t>(0x1) << ((row * BOARD_ROW) + (BOARD_COL * column)));
     }
     SquareName get_square_name() const {
         return SquareName{
             static_cast<char>('a' + column),
-            static_cast<char>('0' + row)
+            static_cast<char>('1' + row)
         };
+    }
+    void print() {
+        std::cout << get_square_name().file << get_square_name().rank;
     }
 } SquarePosition;
 
@@ -57,6 +60,12 @@ typedef struct Move {
     Move(SquarePosition from, SquarePosition to) : old_position(from), new_position(to), piece_promotion({}) {};
     Move(SquarePosition from, SquarePosition to, Pieces promotion) :
         old_position(from), new_position(to), piece_promotion(promotion) {};
+
+    void print() {
+        old_position.print();
+        std::cout << " -> ";
+        new_position.print();
+    }
 } Move;
 
 #endif //PIECES_H

@@ -33,7 +33,7 @@
 struct BitBoard {
     uint64_t board;
 
-    BitBoard(uint64_t b) {
+    BitBoard(const uint64_t b) {
         board = b;
     }
     
