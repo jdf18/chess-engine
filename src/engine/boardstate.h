@@ -65,9 +65,6 @@ std::unordered_map<uint16_t, uint64_t> get_diag_attacks_ne_better();
 std::unordered_map<uint16_t, uint64_t> get_diag_attacks_nw_better();
 std::unordered_map<uint64_t, int> get_square_to_index_map();
 
-
-
-
 // bitboards: 64 bit unsigned integers, with 1 bit for each square of the board.
 //   There will be quite a few different bitboards, containing useful information.
 //   The least significant bit is the square a1. The next least significant is b1, 
@@ -112,6 +109,27 @@ struct CastlingAvailability {
     CastlingAvailability(const CastlingAvailability& copy) {
         state = copy.state;
     }
+
+    void remove_castle() {
+        white_kingside = false;
+        white_queenside = false;
+        black_kingside = false;
+        black_queenside = false;
+    }
+
+    bool castle_possible(const CastleType castle) const {
+        switch (castle) {
+            case CASTLE_WHITE_KINGSIDE:
+                return white_kingside;
+            case CASTLE_WHITE_QUEENSIDE:
+                return white_queenside;
+            case CASTLE_BLACK_KINGSIDE:
+                return black_kingside;
+            case CASTLE_BLACK_QUEENSIDE:
+                return black_queenside;
+        }
+        return false;
+    }
 };
 
 struct BoardState {
@@ -150,7 +168,16 @@ struct BoardState {
     BitBoard pseudo_legal_bishop_moves(Colour colour, BitBoard square);
     BitBoard pseudo_legal_pawn_moves(Colour colour);
 
-    PieceInstance get_piece(uint8_t row, uint8_t column);
+    PieceInstance get_piece(SquarePosition position) const;
+    PieceInstance get_piece(uint8_t row, uint8_t column) const;
+    PieceInstance* get_piece_ptr(SquarePosition position);
+    PieceInstance* get_piece_ptr(uint8_t row, uint8_t column);
+
+    bool is_move_castle_valid(const Move& move) const;
+    bool is_move_en_passant_valid(const Move& move) const;
+
+    bool move_piece(SquarePosition start_position, SquarePosition end_position);
+    bool move_castle(CastleType move);
 
     void print();
     std::string get_fen();

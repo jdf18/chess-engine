@@ -57,8 +57,8 @@ typedef struct Move {
         new_position = copy.new_position;
         piece_promotion = copy.piece_promotion;
     }
-    Move(SquarePosition from, SquarePosition to) : old_position(from), new_position(to), piece_promotion({}) {};
-    Move(SquarePosition from, SquarePosition to, Pieces promotion) :
+    Move(const SquarePosition from, const SquarePosition to) : old_position(from), new_position(to), piece_promotion({}) {};
+    Move(const SquarePosition from, const SquarePosition to, Pieces promotion) :
         old_position(from), new_position(to), piece_promotion(promotion) {};
 
     void print() {
@@ -67,5 +67,24 @@ typedef struct Move {
         new_position.print();
     }
 } Move;
+
+typedef enum {
+    CASTLE_KINGSIDE,
+    CASTLE_QUEENSIDE
+} CastleSide;
+
+typedef enum {
+    CASTLE_WHITE_KINGSIDE = 0,
+    CASTLE_WHITE_QUEENSIDE = 1,
+    CASTLE_BLACK_KINGSIDE = 2,
+    CASTLE_BLACK_QUEENSIDE = 3
+} CastleType;
+
+constexpr Move castle_moves[4] = { // indexes to match CastleType
+    Move{SquarePosition{0,4}, SquarePosition{0, 1}},
+    Move{SquarePosition{0,4}, SquarePosition{0, 6}},
+    Move{SquarePosition{7,4}, SquarePosition{7, 1}},
+    Move{SquarePosition{7,4}, SquarePosition{7, 6}},
+};
 
 #endif //PIECES_H
