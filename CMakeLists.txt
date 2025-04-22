@@ -15,4 +15,5 @@ add_executable(Engine
     src/engine/boardstate.cpp
     src/engine/piece.cpp
     src/engine/decisiontree.cpp
+    src/engine/boardstateModifications.cpp
 )

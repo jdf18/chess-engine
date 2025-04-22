@@ -813,35 +813,6 @@ BitBoard BoardState::pseudo_legal_king_moves(Colour colour) {
 	return out;
 }
 
-PieceInstance BoardState::get_piece(uint8_t row, uint8_t column) {
-	const BitBoard square_mask = (static_cast<uint64_t>(0x1) << (row + (8 * column)));
-	Colour piece_colour;
-
-	if ((pieces_white & square_mask).board != 0) {
-		piece_colour = COL_WHITE;
-	} else if ((pieces_black & square_mask).board != 0) {
-		piece_colour = COL_BLACK;
-	} else {
-		return PieceInstance{std::make_unique<Piece>(COL_NONE, PIECE_NONE), SquarePosition{row, column}};
-	}
-
-	if ((pieces_kings & square_mask).board != 0) {
-		return PieceInstance{std::make_unique<Piece>(piece_colour, PIECE_KING), SquarePosition{row, column}};
-	} else if ((pieces_queens & square_mask).board != 0) {
-		return PieceInstance{std::make_unique<Piece>(piece_colour, PIECE_QUEEN), SquarePosition{row, column}};
-	} else if ((pieces_rooks & square_mask).board != 0) {
-		return PieceInstance{std::make_unique<Piece>(piece_colour, PIECE_ROOK), SquarePosition{row, column}};
-	} else if ((pieces_bishops & square_mask).board != 0) {
-		return PieceInstance{std::make_unique<Piece>(piece_colour, PIECE_BISHOP), SquarePosition{row, column}};
-	} else if ((pieces_knights & square_mask).board != 0) {
-		return PieceInstance{std::make_unique<Piece>(piece_colour, PIECE_KNIGHT), SquarePosition{row, column}};
-	} else if ((pieces_pawns & square_mask).board != 0) {
-		return PieceInstance{std::make_unique<Piece>(piece_colour, PIECE_PAWN), SquarePosition{row, column}};
-	} else {
-		return PieceInstance{std::make_unique<Piece>(piece_colour, PIECE_NONE), SquarePosition{row, column}};
-	}
-}
-
 void BoardState::print() {
 	for (uint8_t column = 0; column < 8; column++) {
 		for (uint8_t row = 0; row < 8; row++) {
