@@ -600,7 +600,7 @@ inline BitBoard translate(BitBoard pieces, int8_t row_mod, int8_t col_mod) {
 
 
 // Returns all the valid squares for a knight on 'square' to move to
-BitBoard BoardState::pseudo_legal_knight_moves(BitBoard square) {
+BitBoard BoardState::pseudo_legal_knight_moves(BitBoard square) const {
 	Colour colour = (square & pieces_white) != 0 ? COL_WHITE : COL_BLACK;
     BitBoard friendly_pieces = (colour == COL_WHITE ? pieces_white : pieces_black);
 
@@ -628,7 +628,7 @@ BitBoard BoardState::pseudo_legal_knight_moves(BitBoard square) {
 // all pieces of the same colour as the pawn.
 // This does factor in the pawn making a double move if it's on the second rank.
 // It requires a boolean for the colour. True for white and False for black.
-BitBoard BoardState::pseudo_legal_pawn_moves(BitBoard square) {
+BitBoard BoardState::pseudo_legal_pawn_moves(BitBoard square) const {
 	// In the case that the pawn is white, it moves two squares if on the second rank.
 	// The direction it moves is also different.
 	// I don't think this can be written without the branch on colour, but the second 
@@ -703,7 +703,7 @@ BitBoard BoardState::pseudo_legal_pawn_moves(BitBoard square) {
 
 }
 
-BitBoard BoardState::pseudo_legal_rook_moves(BitBoard square) {
+BitBoard BoardState::pseudo_legal_rook_moves(BitBoard square) const {
 	Colour colour = (square & pieces_white) != 0 ? COL_WHITE : COL_BLACK;
 	uint64_t friendly_pieces = (colour == COL_WHITE ? pieces_white.board : pieces_black.board);
 	uint64_t all_pieces = pieces_white.board | pieces_black.board;
@@ -734,7 +734,7 @@ BitBoard BoardState::pseudo_legal_rook_moves(BitBoard square) {
 
 }
 
-BitBoard BoardState::pseudo_legal_bishop_moves(BitBoard square) {
+BitBoard BoardState::pseudo_legal_bishop_moves(BitBoard square) const {
 	Colour colour = (square & pieces_white) != 0 ? COL_WHITE : COL_BLACK;
 	uint64_t friendly_pieces = colour == COL_WHITE ? pieces_white.board : pieces_black.board;
 	uint64_t all_pieces = pieces_white.board | pieces_black.board;
@@ -778,11 +778,11 @@ BitBoard BoardState::pseudo_legal_bishop_moves(BitBoard square) {
 	return (ne_attacks | nw_attacks) & ~friendly_pieces;
 }
 
-BitBoard BoardState::pseudo_legal_queen_moves(BitBoard square) {
+BitBoard BoardState::pseudo_legal_queen_moves(BitBoard square) const {
 	return (pseudo_legal_rook_moves(square) | pseudo_legal_bishop_moves(square));
 }
 
-BitBoard BoardState::pseudo_legal_king_moves(BitBoard square) {
+BitBoard BoardState::pseudo_legal_king_moves(BitBoard square) const {
 	Colour colour = (square & pieces_white) != 0 ? COL_WHITE : COL_BLACK;
 	BitBoard out = 0;
 	BitBoard friendly_pieces = (colour == COL_WHITE ? pieces_white : pieces_black);

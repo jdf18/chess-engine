@@ -146,12 +146,12 @@ struct BoardState {
     //All of these methods take a bitboard with a single bit for the position of the piece.
     //They return the pseudo legal moves for a piece of that type at the position given.
     //They assume that the piece is actually there, as they require that to get the colour.
-    BitBoard pseudo_legal_king_moves(BitBoard square);
-    BitBoard pseudo_legal_queen_moves(BitBoard square);
-    BitBoard pseudo_legal_rook_moves(BitBoard square);
-    BitBoard pseudo_legal_knight_moves(BitBoard square);
-    BitBoard pseudo_legal_bishop_moves(BitBoard square);
-    BitBoard pseudo_legal_pawn_moves(BitBoard square);
+    BitBoard pseudo_legal_king_moves(BitBoard square) const;
+    BitBoard pseudo_legal_queen_moves(BitBoard square) const;
+    BitBoard pseudo_legal_rook_moves(BitBoard square) const;
+    BitBoard pseudo_legal_knight_moves(BitBoard square) const;
+    BitBoard pseudo_legal_bishop_moves(BitBoard square) const;
+    BitBoard pseudo_legal_pawn_moves(BitBoard square) const;
 
     PieceInstance get_piece(uint8_t row, uint8_t column);
 

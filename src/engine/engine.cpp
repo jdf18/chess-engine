@@ -11,7 +11,7 @@ int main() {
     std::cout << std::endl << initial_state.get_fen();
 
     BitBoard possible_moves;
-    possible_moves = initial_state.pseudo_legal_knight_moves(COL_WHITE);
+    possible_moves = initial_state.pseudo_legal_knight_moves(0x0000000000000002);
 
     initial_state.pieces_knights.out();
 
@@ -26,8 +26,8 @@ int main() {
 
     initial_state.pieces_white |= rook_pos;
 
-    BitBoard rook_moves = initial_state.pseudo_legal_rook_moves(COL_WHITE, rook_pos);
-    BitBoard bishop_moves = initial_state.pseudo_legal_bishop_moves(COL_WHITE, rook_pos);
+    BitBoard rook_moves = initial_state.pseudo_legal_rook_moves(rook_pos);
+    BitBoard bishop_moves = initial_state.pseudo_legal_bishop_moves(rook_pos);
 
     std::cout << std::endl;
 
