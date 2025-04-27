@@ -4,7 +4,7 @@ void DecisionTreeNode::add_child(NodeData child_data) {
     children.push_back(std::make_unique<DecisionTreeNode>(child_data));
 }
 
-void DecisionTreeNode::generate_moves() {
+void DecisionTreeNode::generate_castle_moves() {
     const BoardState* current_board = &data.board_state;
 
     // possible moves for castling
@@ -19,15 +19,19 @@ void DecisionTreeNode::generate_moves() {
 
             // update castling state
             new_data.board_state.castling_state.remove_castle();
+
+            add_child(new_data);
         }
 
-        add_child(new_data);
     }
+}
+
+void DecisionTreeNode::generate_en_passant_moves() {
+    const BoardState* current_board = &data.board_state;
 
     // possible moves for en passant
-
     const PieceInstance previous_moved_piece = current_board->get_piece(current_board->previous_move->new_position);
-    bool passant_move_valid =
+    const bool passant_move_valid =
         (abs(current_board->previous_move->new_position.row - current_board->previous_move->old_position.row) == 2) &&
         (current_board->previous_move->new_position.column == current_board->previous_move->old_position.column);
 
@@ -46,9 +50,7 @@ void DecisionTreeNode::generate_moves() {
             NodeData new_data{data.board_state};
             new_data.board_state.previous_move = possible_move;
 
-            if (new_data.board_state.is_move_en_passant_valid(possible_move)) {
-
-            }
+            // new_data.board_state.is_move_en_passant_valid(possible_move)
 
             new_data.board_state.move_piece(possible_move.old_position, possible_move.new_position);
             new_data.board_state.remove_piece(passant_taken_pawn);
@@ -56,6 +58,14 @@ void DecisionTreeNode::generate_moves() {
             add_child(new_data);
         }
     }
+}
+
+
+void DecisionTreeNode::generate_moves() {
+    const BoardState* current_board = &data.board_state;
+
+    generate_castle_moves();
+    generate_en_passant_moves();
 
     for (uint8_t i = 0; i < 31; i++) {
         PieceInstance* piece_instance = &data.board_state.pieces[i];

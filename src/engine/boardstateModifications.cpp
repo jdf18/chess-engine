@@ -18,31 +18,38 @@ bool BoardState::is_move_castle_valid(const Move& move) const {
     const uint8_t delta = abs(move.new_position.column - move.old_position.column);
     if (delta == 0) std::cout << "Invalid move (moving to same position)";
 
-    //todo: check squares in between are empty
-
+    BitBoard mask;
+    if (delta == CASTLE_KINGSIDE_COL_DELTA) {
+        mask = SECOND_FILE | THIRD_FILE;
+    } else if (delta == CASTLE_KINGSIDE_COL_DELTA) {
+        mask = FIFTH_FILE | SIXTH_FILE | SEVENTH_FILE;
+    } else return false;
+    if (moving_colour == COL_BLACK) mask = mask << BOARD_ROW*7;
+    if (((pieces_white | pieces_black) & mask).board != 0) return false;
 
     if (moving_colour == COL_WHITE) {
-        if (castling_state.white_kingside && delta == CASTLE_KINGSIDE_COL_DELTA) return true;
-        if (castling_state.white_queenside && delta == CASTLE_QUEENSIDE_COL_DELTA) return true;
+        if (castling_state.white_kingside  && (delta == CASTLE_KINGSIDE_COL_DELTA))  return true;
+        if (castling_state.white_queenside && (delta == CASTLE_QUEENSIDE_COL_DELTA)) return true;
     } else if (moving_colour == COL_BLACK) {
-        if (castling_state.black_kingside && delta == CASTLE_KINGSIDE_COL_DELTA) return true;
-        if (castling_state.black_queenside && delta == CASTLE_QUEENSIDE_COL_DELTA) return true;
+        if (castling_state.black_kingside  && (delta == CASTLE_KINGSIDE_COL_DELTA))  return true;
+        if (castling_state.black_queenside && (delta == CASTLE_QUEENSIDE_COL_DELTA)) return true;
     }
 
     return false;
 }
 
-bool BoardState::is_move_en_passant_valid(const Move& move) const {
-    // Test to see if piece being moved is a pawn
-    if ((pieces_pawns & move.old_position.get_bitboard_mask()).board == 0) return false;
-
-    // if new square empty
-    if (((pieces_white | pieces_black) & move.old_position.get_bitboard_mask()).board == 0) return false;
-
-    // if diagonally forwards
-    // if legal from last move
-    return false;
-}
+// ? Possibly not required
+// bool BoardState::is_move_en_passant_valid(const Move& move) const {
+//     // Test to see if piece being moved is a pawn
+//     if ((pieces_pawns & move.old_position.get_bitboard_mask()).board == 0) return false;
+//
+//     // if new square empty
+//     if (((pieces_white | pieces_black) & move.old_position.get_bitboard_mask()).board == 0) return false;
+//
+//     // if diagonally forwards
+//     // if legal from last move
+//     return false;
+// }
 
 PieceInstance BoardState::get_piece(const SquarePosition position) const {
     return get_piece(position.row, position.column);
@@ -96,16 +103,16 @@ bool BoardState::move_piece(const SquarePosition start_position, const SquarePos
     PieceInstance* moving_piece = get_piece_ptr(start_position.row, start_position.column);
     if ((moving_piece->piece->colour == COL_NONE) && (moving_piece->piece->type == PIECE_NONE)) return false;
 
-    // move the piece to the new position
-    moving_piece->position = end_position;
-
     // Delete the taken piece (iff it exists)
     PieceInstance* taken_piece = get_piece_ptr(end_position.row, end_position.column);
     if (taken_piece != nullptr) {
-        // todo: if taking a piece, delete piece in pieces array
+        // if taking a piece, delete piece in pieces array
         taken_piece->piece->colour = COL_NONE;
         taken_piece->piece->type = PIECE_NONE;
     }
+
+    // move the piece to the new position
+    moving_piece->position = end_position;
 
     // todo: pawn promotion - check if pawn new position on final rank and modify moves
 
@@ -116,9 +123,11 @@ bool BoardState::move_piece(const SquarePosition start_position, const SquarePos
         pieces_white ^= move_mask;
         // Ensure no pieces from the opposing side are on the move squares
         pieces_black &= ~move_mask;
-    } else {
+    } else if (moving_piece->piece->colour == COL_BLACK) {
         pieces_black ^= move_mask;
         pieces_white &= ~move_mask;
+    } else {
+        return false;
     }
 
     // Remove all pieces (types) from both squares involved with the move
@@ -201,6 +210,10 @@ bool BoardState::move_castle(const CastleType move) {
 }
 
 bool BoardState::remove_piece(const SquarePosition position) {
+    const PieceInstance* taken_piece = get_piece_ptr(position.column, position.row);
+    taken_piece->piece->colour = COL_NONE;
+    taken_piece->piece->type = PIECE_NONE;
+
     const BitBoard mask = position.get_bitboard_mask();
 
     pieces_white &= ~mask;
