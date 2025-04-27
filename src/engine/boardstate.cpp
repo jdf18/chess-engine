@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <unordered_map>
 #include <cmath>
+#include <bit>
 
 
 std::unordered_map<uint64_t, uint64_t> file_masks = get_file_mask();
@@ -12,21 +13,6 @@ std::unordered_map<uint64_t, uint64_t> diag_masks_nw = get_diag_mask_nw();
 std::unordered_map<uint16_t, uint8_t> rank_attacks_map = get_rank_attacks();
 std::unordered_map<uint16_t, uint64_t> diag_attacks_ne = get_diag_attacks_ne_better();
 std::unordered_map<uint16_t, uint64_t> diag_attacks_nw = get_diag_attacks_nw_better();
-std::unordered_map<uint64_t, int> square_to_index_map = get_square_to_index_map();
-
-
-std::unordered_map<uint64_t, int> get_square_to_index_map() {
-	std::unordered_map<uint64_t, int> map = {};
-	map.rehash(64);
-	uint64_t key = 1;
-	int index = 0;
-	while (key > 0) {
-		map.insert({ key, index });
-		key <<= 1;
-		index++;
-	}
-	return map;
-}
 
 // Creates a hash table mapping every (individual) square to its rank
 std::unordered_map<uint64_t, uint64_t> get_rank_mask() {
@@ -567,7 +553,7 @@ std::unordered_map<uint16_t, uint64_t> get_diag_attacks_nw_better() {
 inline uint64_t rank_to_file(uint8_t rank) {
 	uint64_t output = 0;
 	for (int i = 0; i <= 49; i += 7) {
-		output |= rank << i;
+		output |= (uint64_t)rank << i;
 	}
 	output &= FIRST_FILE;
 	return output;
@@ -613,24 +599,23 @@ inline BitBoard translate(BitBoard pieces, int8_t row_mod, int8_t col_mod) {
 }
 
 
-// Returns all the valid squares for a knight on 'square' to move to, given 'friendly_pieces',
-// which is the position of all pieces of the same colour as the knight.
-BitBoard BoardState::pseudo_legal_knight_moves(Colour colour) {
+// Returns all the valid squares for a knight on 'square' to move to
+BitBoard BoardState::pseudo_legal_knight_moves(BitBoard square) const {
+	Colour colour = (square & pieces_white) != 0 ? COL_WHITE : COL_BLACK;
     BitBoard friendly_pieces = (colour == COL_WHITE ? pieces_white : pieces_black);
-    BitBoard friendly_knights = pieces_knights & friendly_pieces;
 
 	BitBoard possible_moves = 0;
     // Set bits of squares which the knight can move to
 
 	// Get a bitboard of the possible moves of all knights on the board
-	possible_moves |= translate(friendly_knights,  1,  2);
-	possible_moves |= translate(friendly_knights,  1, -2);
-	possible_moves |= translate(friendly_knights, -1,  2);
-	possible_moves |= translate(friendly_knights, -1, -2);
-	possible_moves |= translate(friendly_knights,  2,  1);
-	possible_moves |= translate(friendly_knights,  2, -1);
-	possible_moves |= translate(friendly_knights, -2,  1);
-	possible_moves |= translate(friendly_knights, -2, -1);
+	possible_moves |= translate(square,  1,  2);
+	possible_moves |= translate(square,  1, -2);
+	possible_moves |= translate(square, -1,  2);
+	possible_moves |= translate(square, -1, -2);
+	possible_moves |= translate(square,  2,  1);
+	possible_moves |= translate(square,  2, -1);
+	possible_moves |= translate(square, -2,  1);
+	possible_moves |= translate(square, -2, -1);
 
     // Can not move to squares that are occupied by own pieces
     possible_moves &= ~friendly_pieces;
@@ -643,7 +628,7 @@ BitBoard BoardState::pseudo_legal_knight_moves(Colour colour) {
 // all pieces of the same colour as the pawn.
 // This does factor in the pawn making a double move if it's on the second rank.
 // It requires a boolean for the colour. True for white and False for black.
-BitBoard BoardState::pseudo_legal_pawn_moves(Colour colour) {
+BitBoard BoardState::pseudo_legal_pawn_moves(BitBoard square) const {
 	// In the case that the pawn is white, it moves two squares if on the second rank.
 	// The direction it moves is also different.
 	// I don't think this can be written without the branch on colour, but the second 
@@ -656,8 +641,8 @@ BitBoard BoardState::pseudo_legal_pawn_moves(Colour colour) {
 	// Old function definition is below:
 	//   uint64_t pseudo_legal_pawn_moves(uint64_t square, uint64_t pieces, uint64_t friendly_pieces, uint64_t enemy_pieces, bool white)
 
-	BitBoard square = pieces_pawns;
 	BitBoard pieces = pieces_white | pieces_black;
+	Colour colour = (square & pieces_white) != 0 ? COL_WHITE : COL_BLACK;
 
 	BitBoard friendly_pieces = (colour == COL_WHITE ? pieces_white : pieces_black);
 	BitBoard enemy_pieces = (colour != COL_WHITE ? pieces_white : pieces_black);
@@ -686,7 +671,6 @@ BitBoard BoardState::pseudo_legal_pawn_moves(Colour colour) {
 			allsquares &= ~pieces;
 		}
 		allsquares |= ((square << (BOARD_ROW - BOARD_COL)) | (square << (BOARD_ROW + BOARD_COL))) & enemy_pieces;
-		allsquares &= ~friendly_pieces;
 	}
 	else {
 		// Check if the pawn is on the seventh rank
@@ -705,7 +689,6 @@ BitBoard BoardState::pseudo_legal_pawn_moves(Colour colour) {
 			allsquares &= ~pieces;
 		}
 		allsquares |= ((square >> (BOARD_ROW - BOARD_COL)) | (square >> (BOARD_ROW + BOARD_COL))) & enemy_pieces;
-		allsquares &= ~friendly_pieces;
 		
 	}
 
@@ -720,7 +703,8 @@ BitBoard BoardState::pseudo_legal_pawn_moves(Colour colour) {
 
 }
 
-BitBoard BoardState::pseudo_legal_rook_moves(Colour colour, BitBoard square) {
+BitBoard BoardState::pseudo_legal_rook_moves(BitBoard square) const {
+	Colour colour = (square & pieces_white) != 0 ? COL_WHITE : COL_BLACK;
 	uint64_t friendly_pieces = (colour == COL_WHITE ? pieces_white.board : pieces_black.board);
 	uint64_t all_pieces = pieces_white.board | pieces_black.board;
 	uint64_t rank_mask = rank_masks[square.board];
@@ -750,15 +734,16 @@ BitBoard BoardState::pseudo_legal_rook_moves(Colour colour, BitBoard square) {
 
 }
 
-BitBoard BoardState::pseudo_legal_bishop_moves(Colour colour, BitBoard square) {
-	uint64_t friendly_pieces = (colour == COL_WHITE ? pieces_white.board : pieces_black.board);
+BitBoard BoardState::pseudo_legal_bishop_moves(BitBoard square) const {
+	Colour colour = (square & pieces_white) != 0 ? COL_WHITE : COL_BLACK;
+	uint64_t friendly_pieces = colour == COL_WHITE ? pieces_white.board : pieces_black.board;
 	uint64_t all_pieces = pieces_white.board | pieces_black.board;
 	uint64_t diag_mask_ne = diag_masks_ne[square.board];
 	uint64_t diag_mask_nw = diag_masks_nw[square.board];
 
 	// Get ne attacks:
 	uint64_t ne_diag = diag_mask_ne & all_pieces;
-	uint16_t key = square_to_index_map[square.board] << 8;
+	uint16_t key = std::countr_zero(square.board) << 8;
 	uint8_t occupancy = 0;
 	uint8_t first_pos = 0;
 	uint8_t diag_length = std::bitset<64>(diag_mask_ne).count();
@@ -775,7 +760,7 @@ BitBoard BoardState::pseudo_legal_bishop_moves(Colour colour, BitBoard square) {
 
 	// Get nw attacks:
 	uint64_t nw_diag = diag_mask_nw & all_pieces;
-	key = square_to_index_map[square.board] << 8;
+	key = std::countr_zero(square.board) << 8;
 	occupancy = 0;
 	first_pos = 0;
 	diag_length = std::bitset<64>(diag_mask_nw).count();
@@ -793,22 +778,22 @@ BitBoard BoardState::pseudo_legal_bishop_moves(Colour colour, BitBoard square) {
 	return (ne_attacks | nw_attacks) & ~friendly_pieces;
 }
 
-BitBoard BoardState::pseudo_legal_queen_moves(Colour colour, BitBoard square) {
-	return (pseudo_legal_rook_moves(colour, square) | pseudo_legal_bishop_moves(colour, square));
+BitBoard BoardState::pseudo_legal_queen_moves(BitBoard square) const {
+	return (pseudo_legal_rook_moves(square) | pseudo_legal_bishop_moves(square));
 }
 
-BitBoard BoardState::pseudo_legal_king_moves(Colour colour) {
+BitBoard BoardState::pseudo_legal_king_moves(BitBoard square) const {
+	Colour colour = (square & pieces_white) != 0 ? COL_WHITE : COL_BLACK;
 	BitBoard out = 0;
 	BitBoard friendly_pieces = (colour == COL_WHITE ? pieces_white : pieces_black);
-	BitBoard king = pieces_kings & friendly_pieces;
-	out |= translate(king, -1, -1);
-	out |= translate(king, -1, 0);
-	out |= translate(king, -1, 1);
-	out |= translate(king, 0, 1);
-	out |= translate(king, 1, 1);
-	out |= translate(king, 1, 0);
-	out |= translate(king, 1, -1);
-	out |= translate(king, 0, -1);
+	out |= translate(square, -1, -1);
+	out |= translate(square, -1, 0);
+	out |= translate(square, -1, 1);
+	out |= translate(square, 0, 1);
+	out |= translate(square, 1, 1);
+	out |= translate(square, 1, 0);
+	out |= translate(square, 1, -1);
+	out |= translate(square, 0, -1);
 	out &= ~friendly_pieces;
 	return out;
 }

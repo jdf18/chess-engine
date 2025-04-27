@@ -2,6 +2,7 @@
 #define PIECES_H
 
 #include <optional>
+#include <bit>
 #include "bitboard.h"
 
 typedef enum {
@@ -30,18 +31,28 @@ typedef struct SquarePosition {
 
     SquarePosition() : row(255), column(255) {};
     SquarePosition(uint8_t row, uint8_t column) : row(row), column(column) {};
+    
+    //Constructor to get a square position from a BitBoard with a single bit.
+    //Assumes that there is only a single bit. If not, it gives the position of the rightmost bit.
+    SquarePosition(BitBoard square) {
+        uint8_t ind = std::countr_zero(square.board);
+        row = ind / 8;
+        column = ind - (row * 8);
+    }
 
     bool is_not_defined() const {return (row == 255) && (column == 255);};
 
     BitBoard get_bitboard_mask() const {
-        return BitBoard(static_cast<uint64_t>(0x1) << ((row * BOARD_ROW) + (BOARD_COL * column)));
+        return {static_cast<uint64_t>(0x1) << ((row * BOARD_ROW) + (BOARD_COL * column))};
     }
+
     SquareName get_square_name() const {
         return SquareName{
             static_cast<char>('a' + column),
             static_cast<char>('1' + row)
         };
     }
+
     void print() {
         std::cout << get_square_name().file << get_square_name().rank;
     }

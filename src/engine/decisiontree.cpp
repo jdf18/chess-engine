@@ -36,8 +36,8 @@ void DecisionTreeNode::generate_en_passant_moves() {
         (current_board->previous_move->new_position.column == current_board->previous_move->old_position.column);
 
     if (previous_moved_piece.piece->type == PIECE_PAWN && passant_move_valid) {
-        SquarePosition passant_taken_pawn = previous_moved_piece.position;
-        SquarePosition passant_end_square = {
+        const SquarePosition passant_taken_pawn = previous_moved_piece.position;
+        const SquarePosition passant_end_square = {
             static_cast<uint8_t>(passant_taken_pawn.row + (current_board->white_to_move ? 1 : -1)),
             passant_taken_pawn.column};
 
