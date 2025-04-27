@@ -27,7 +27,7 @@ int main() {
         tree.root->children[i]->data.board_state.print();
     }
 
-    BitBoard possible_moves = initial_board_state.pseudo_legal_knight_moves(SECOND_FILE & FIRST_RANK);
+    BitBoard possible_moves = initial_board_state.pseudo_legal_pawn_moves(EIGHTH_FILE & SECOND_RANK);
 
     possible_moves.out();
 
@@ -38,15 +38,12 @@ int main() {
 
     initial_board_state.pieces_white |= rook_pos;
 
-    BitBoard rook_moves = initial_board_state.pseudo_legal_rook_moves(rook_pos);
-    BitBoard bishop_moves = initial_board_state.pseudo_legal_bishop_moves(rook_pos);
-
     std::cout << std::endl;
-
+    BitBoard rook_moves = initial_board_state.pseudo_legal_rook_moves(rook_pos);
     rook_moves.out();
 
     std::cout << std::endl;
-
+    BitBoard bishop_moves = initial_board_state.pseudo_legal_bishop_moves(rook_pos);
     bishop_moves.out();
 
     return 0;

@@ -20,7 +20,7 @@
 #define PIECE_ARRAY_KNIGHT_LEFT 6
 #define PIECE_ARRAY_KNIGHT_RIGHT 7
 #define PIECE_ARRAY_PAWN_LEFTMOST 8
-#define PIECE_ARRAY_PAWN_RIGHTMOST 15
+#define PIECE_ARRAY_PAWN_RIGHTMOST (PIECE_ARRAY_PAWN_LEFTMOST + 7)
 
 #define PIECE_ARRAY_WHITE_OFFSET 0
 #define PIECE_ARRAY_WHITE_KING              (PIECE_ARRAY_WHITE_OFFSET + PIECE_ARRAY_KING)
@@ -235,7 +235,7 @@ struct BoardState {
         SET_PIECE_IN_ARRAY(pieces, KNIGHT_LEFT, KNIGHT, 1);
         SET_PIECE_IN_ARRAY(pieces, KNIGHT_RIGHT, KNIGHT, 6);
 
-        for (uint8_t i = 0; i < 7; i++) {
+        for (uint8_t i = 0; i < 8; i++) {
             pieces[PIECE_ARRAY_WHITE_PAWN_LEFTMOST + i].piece = std::make_unique<Piece>(COL_WHITE, PIECE_PAWN);
             pieces[PIECE_ARRAY_WHITE_PAWN_LEFTMOST + i].position = SquarePosition{1, i};
             pieces[PIECE_ARRAY_BLACK_PAWN_LEFTMOST + i].piece = std::make_unique<Piece>(COL_BLACK, PIECE_PAWN);
