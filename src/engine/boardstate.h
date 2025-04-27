@@ -178,6 +178,7 @@ struct BoardState {
 
     bool move_piece(SquarePosition start_position, SquarePosition end_position);
     bool move_castle(CastleType move);
+    bool remove_piece(const SquarePosition position);
 
     void print();
     std::string get_fen();

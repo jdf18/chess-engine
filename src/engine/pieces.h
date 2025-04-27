@@ -80,7 +80,7 @@ typedef enum {
     CASTLE_BLACK_QUEENSIDE = 3
 } CastleType;
 
-constexpr Move castle_moves[4] = { // indexes to match CastleType
+const Move castle_moves[4] = { // indexes to match CastleType
     Move{SquarePosition{0,4}, SquarePosition{0, 1}},
     Move{SquarePosition{0,4}, SquarePosition{0, 6}},
     Move{SquarePosition{7,4}, SquarePosition{7, 1}},

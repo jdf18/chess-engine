@@ -200,3 +200,18 @@ bool BoardState::move_castle(const CastleType move) {
     return true;
 }
 
+bool BoardState::remove_piece(const SquarePosition position) {
+    const BitBoard mask = position.get_bitboard_mask();
+
+    pieces_white &= ~mask;
+    pieces_black &= ~mask;
+
+    pieces_kings   &= ~mask;
+    pieces_queens  &= ~mask;
+    pieces_rooks   &= ~mask;
+    pieces_bishops &= ~mask;
+    pieces_knights &= ~mask;
+    pieces_pawns   &= ~mask;
+
+    return true;
+}
