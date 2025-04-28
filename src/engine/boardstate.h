@@ -6,12 +6,15 @@
 #include <unordered_map>
 #include <string>
 #include <optional>
+#include <cmath>
+#include <bit>
 
 #include "pieces.h"
 #include "piece.h"
 #include "bitboard.h"
 #include "fenparser.h"
 #include "castlingavailability.h"
+#include "movemaps.h"
 
 #define PIECE_ARRAY_KING 0
 #define PIECE_ARRAY_QUEEN 1
@@ -56,16 +59,13 @@ do { \
     arr[PIECE_ARRAY_BLACK_##offset].position = SquarePosition{7, file}; \
 }while(0)
 
-std::unordered_map<uint64_t, uint64_t> get_file_mask();
-std::unordered_map<uint64_t, uint64_t> get_rank_mask();
-std::unordered_map<uint64_t, uint64_t> get_diag_mask_ne();
-std::unordered_map<uint64_t, uint64_t> get_diag_mask_nw();
-std::unordered_map<uint16_t, uint8_t> get_rank_attacks();
-std::unordered_map<std::bitset<128>, uint64_t> get_diag_attacks_ne();
-std::unordered_map<std::bitset<128>, uint64_t> get_diag_attacks_nw();
-std::unordered_map<uint16_t, uint64_t> get_diag_attacks_ne_better();
-std::unordered_map<uint16_t, uint64_t> get_diag_attacks_nw_better();
-std::unordered_map<uint64_t, int> get_square_to_index_map();
+extern std::unordered_map<uint64_t, uint64_t> rank_masks;
+extern std::unordered_map<uint64_t, uint64_t> file_masks;
+extern std::unordered_map<uint64_t, uint64_t> diag_masks_ne;
+extern std::unordered_map<uint64_t, uint64_t> diag_masks_nw;
+extern std::unordered_map<uint16_t, uint8_t> rank_attacks_map;
+extern std::unordered_map<uint16_t, uint64_t> diag_attacks_ne;
+extern std::unordered_map<uint16_t, uint64_t> diag_attacks_nw;
 
 // bitboards: 64 bit unsigned integers, with 1 bit for each square of the board.
 //   There will be quite a few different bitboards, containing useful information.
