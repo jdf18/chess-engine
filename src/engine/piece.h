@@ -10,8 +10,8 @@ struct BoardState;
 
 class Piece {
 public:
-    const Colour colour;
-    const Pieces type;
+    Colour colour;
+    Pieces type;
 
     Piece(const Colour colour, const Pieces type) : colour(colour), type(type) {};
     ~Piece() = default;

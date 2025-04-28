@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.10)
 
 project(Engine)
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 
 IF(WIN32)
 set(CMAKE_C_COMPILER cl.exe)
@@ -15,4 +15,5 @@ add_executable(Engine
     src/engine/boardstate.cpp
     src/engine/piece.cpp
     src/engine/decisiontree.cpp
+    src/engine/boardstateModifications.cpp
 )

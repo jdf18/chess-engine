@@ -2,6 +2,7 @@
 #define PIECES_H
 
 #include <optional>
+#include <bit>
 #include "bitboard.h"
 
 typedef enum {
@@ -30,18 +31,28 @@ typedef struct SquarePosition {
 
     SquarePosition() : row(255), column(255) {};
     SquarePosition(uint8_t row, uint8_t column) : row(row), column(column) {};
+    
+    //Constructor to get a square position from a BitBoard with a single bit.
+    //Assumes that there is only a single bit. If not, it gives the position of the rightmost bit.
+    SquarePosition(BitBoard square) {
+        uint8_t ind = std::countr_zero(square.board);
+        row = ind / 8;
+        column = ind - (row * 8);
+    }
 
     bool is_not_defined() const {return (row == 255) && (column == 255);};
 
     BitBoard get_bitboard_mask() const {
-        return BitBoard(static_cast<uint64_t>(0x1) << ((row * BOARD_ROW) + (BOARD_COL * column)));
+        return {static_cast<uint64_t>(0x1) << ((row * BOARD_ROW) + (BOARD_COL * column))};
     }
+
     SquareName get_square_name() const {
         return SquareName{
             static_cast<char>('a' + column),
             static_cast<char>('1' + row)
         };
     }
+
     void print() {
         std::cout << get_square_name().file << get_square_name().rank;
     }
@@ -57,8 +68,8 @@ typedef struct Move {
         new_position = copy.new_position;
         piece_promotion = copy.piece_promotion;
     }
-    Move(SquarePosition from, SquarePosition to) : old_position(from), new_position(to), piece_promotion({}) {};
-    Move(SquarePosition from, SquarePosition to, Pieces promotion) :
+    Move(const SquarePosition from, const SquarePosition to) : old_position(from), new_position(to), piece_promotion({}) {};
+    Move(const SquarePosition from, const SquarePosition to, Pieces promotion) :
         old_position(from), new_position(to), piece_promotion(promotion) {};
 
     void print() {
@@ -67,5 +78,24 @@ typedef struct Move {
         new_position.print();
     }
 } Move;
+
+typedef enum {
+    CASTLE_KINGSIDE,
+    CASTLE_QUEENSIDE
+} CastleSide;
+
+typedef enum {
+    CASTLE_WHITE_KINGSIDE = 0,
+    CASTLE_WHITE_QUEENSIDE = 1,
+    CASTLE_BLACK_KINGSIDE = 2,
+    CASTLE_BLACK_QUEENSIDE = 3
+} CastleType;
+
+const Move castle_moves[4] = { // indexes to match CastleType
+    Move{SquarePosition{0,4}, SquarePosition{0, 1}},
+    Move{SquarePosition{0,4}, SquarePosition{0, 6}},
+    Move{SquarePosition{7,4}, SquarePosition{7, 1}},
+    Move{SquarePosition{7,4}, SquarePosition{7, 6}},
+};
 
 #endif //PIECES_H
