@@ -79,4 +79,9 @@ typedef struct Move {
     }
 } Move;
 
+typedef struct {
+    Move move;
+    int evaluation;
+} MoveEvaluated;
+
 #endif //PIECES_H
