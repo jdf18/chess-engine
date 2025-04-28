@@ -77,5 +77,40 @@ bool fen_parser(const std::string& fen, FenState* state) {
         i++;
     }
 
+    state->is_white_to_move = (fen[i] == 'w');
+    i += 2;
+
+    if (fen[i] == '-') {
+        state->castling.white_kingside  = true;
+        state->castling.black_kingside  = true;
+        state->castling.white_queenside = true;
+        state->castling.black_queenside = true;
+    } else {
+        state->castling.white_kingside  = false;
+        state->castling.black_kingside  = false;
+        state->castling.white_queenside = false;
+        state->castling.black_queenside = false;
+
+        while (i < fen.length() && fen[i] != ' ') {
+            switch (fen[i]) {
+                case 'K':
+                    state->castling.white_kingside = true;
+                    break;
+                case 'k':
+                    state->castling.black_kingside = true;
+                    break;
+                case 'Q':
+                    state->castling.white_queenside = true;
+                    break;
+                case 'q':
+                    state->castling.black_queenside = true;
+                    break;
+                default:
+                    break;
+            }
+
+            i++;
+        }
+    }
     return true;
 }
