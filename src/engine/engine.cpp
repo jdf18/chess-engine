@@ -4,8 +4,17 @@
 #include <bitset>
 
 #include "decisiontree.h"
+#include "fenparser.h"
 
 int main() {
+
+    FenState fen_state;
+    std::string fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+    fen_parser(fen, fen_state);
+    BoardState fen_board_state;
+    fen_board_state.setup_from_fen(fen_state);
+    fen_board_state.print();
+
     BoardState initial_board_state;
     initial_board_state.setup_default();
 

@@ -10,6 +10,7 @@
 #include "pieces.h"
 #include "piece.h"
 #include "bitboard.h"
+#include "fenparser.h"
 
 #define PIECE_ARRAY_KING 0
 #define PIECE_ARRAY_QUEEN 1
@@ -215,33 +216,8 @@ struct BoardState {
         pieces_pawns(0),
         white_to_move(true) {}
 
-    void setup_default() {
-        pieces_white = BitBoard(FIRST_RANK | SECOND_RANK);
-        pieces_black = BitBoard(EIGHTH_RANK | SEVENTH_RANK);
-        pieces_kings = BitBoard((FIRST_RANK | EIGHTH_RANK) & FIFTH_FILE);
-        pieces_queens = BitBoard((FIRST_RANK | EIGHTH_RANK) & FOURTH_FILE);
-        pieces_rooks = BitBoard((FIRST_RANK | EIGHTH_RANK) & (FIRST_FILE | EIGHTH_FILE));
-        pieces_bishops = BitBoard((FIRST_RANK | EIGHTH_RANK) & (THIRD_FILE | SIXTH_FILE));
-        pieces_knights = BitBoard((FIRST_RANK | EIGHTH_RANK) & (SECOND_FILE | SEVENTH_FILE));
-        pieces_pawns = BitBoard(SECOND_RANK | SEVENTH_RANK);
-        white_to_move = true;
-
-        SET_PIECE_IN_ARRAY(pieces, KING, KING, 3);
-        SET_PIECE_IN_ARRAY(pieces, QUEEN, QUEEN, 4);
-        SET_PIECE_IN_ARRAY(pieces, ROOK_LEFT, ROOK, 0);
-        SET_PIECE_IN_ARRAY(pieces, ROOK_RIGHT, ROOK, 7);
-        SET_PIECE_IN_ARRAY(pieces, BISHOP_LEFT, BISHOP, 2);
-        SET_PIECE_IN_ARRAY(pieces, BISHOP_RIGHT, BISHOP, 5);
-        SET_PIECE_IN_ARRAY(pieces, KNIGHT_LEFT, KNIGHT, 1);
-        SET_PIECE_IN_ARRAY(pieces, KNIGHT_RIGHT, KNIGHT, 6);
-
-        for (uint8_t i = 0; i < 8; i++) {
-            pieces[PIECE_ARRAY_WHITE_PAWN_LEFTMOST + i].piece = std::make_unique<Piece>(COL_WHITE, PIECE_PAWN);
-            pieces[PIECE_ARRAY_WHITE_PAWN_LEFTMOST + i].position = SquarePosition{1, i};
-            pieces[PIECE_ARRAY_BLACK_PAWN_LEFTMOST + i].piece = std::make_unique<Piece>(COL_BLACK, PIECE_PAWN);
-            pieces[PIECE_ARRAY_BLACK_PAWN_LEFTMOST + i].position = SquarePosition{6, i};
-        }
-    }
+    void setup_default();
+    void setup_from_fen(const FenState &fen);
 };
 
 #endif //BOARDSTATE_H

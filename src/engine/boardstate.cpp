@@ -926,3 +926,64 @@ std::string BoardState::get_fen() {
 
 	return fen;
 }
+
+void BoardState::setup_default() {
+	pieces_white = BitBoard(FIRST_RANK | SECOND_RANK);
+	pieces_black = BitBoard(EIGHTH_RANK | SEVENTH_RANK);
+	pieces_kings = BitBoard((FIRST_RANK | EIGHTH_RANK) & FIFTH_FILE);
+	pieces_queens = BitBoard((FIRST_RANK | EIGHTH_RANK) & FOURTH_FILE);
+	pieces_rooks = BitBoard((FIRST_RANK | EIGHTH_RANK) & (FIRST_FILE | EIGHTH_FILE));
+	pieces_bishops = BitBoard((FIRST_RANK | EIGHTH_RANK) & (THIRD_FILE | SIXTH_FILE));
+	pieces_knights = BitBoard((FIRST_RANK | EIGHTH_RANK) & (SECOND_FILE | SEVENTH_FILE));
+	pieces_pawns = BitBoard(SECOND_RANK | SEVENTH_RANK);
+	white_to_move = true;
+
+	SET_PIECE_IN_ARRAY(pieces, KING, KING, 3);
+	SET_PIECE_IN_ARRAY(pieces, QUEEN, QUEEN, 4);
+	SET_PIECE_IN_ARRAY(pieces, ROOK_LEFT, ROOK, 0);
+	SET_PIECE_IN_ARRAY(pieces, ROOK_RIGHT, ROOK, 7);
+	SET_PIECE_IN_ARRAY(pieces, BISHOP_LEFT, BISHOP, 2);
+	SET_PIECE_IN_ARRAY(pieces, BISHOP_RIGHT, BISHOP, 5);
+	SET_PIECE_IN_ARRAY(pieces, KNIGHT_LEFT, KNIGHT, 1);
+	SET_PIECE_IN_ARRAY(pieces, KNIGHT_RIGHT, KNIGHT, 6);
+
+	for (uint8_t i = 0; i < 8; i++) {
+		pieces[PIECE_ARRAY_WHITE_PAWN_LEFTMOST + i].piece = std::make_unique<Piece>(COL_WHITE, PIECE_PAWN);
+		pieces[PIECE_ARRAY_WHITE_PAWN_LEFTMOST + i].position = SquarePosition{1, i};
+		pieces[PIECE_ARRAY_BLACK_PAWN_LEFTMOST + i].piece = std::make_unique<Piece>(COL_BLACK, PIECE_PAWN);
+		pieces[PIECE_ARRAY_BLACK_PAWN_LEFTMOST + i].position = SquarePosition{6, i};
+	}
+}
+
+void BoardState::setup_from_fen(const FenState &fen) {
+	uint8_t piece_index = 0;
+	for (uint8_t rank_index = 0; rank_index < 8; rank_index++) {
+		const FenRank rank = fen.ranks[rank_index];
+		for (uint8_t column_index = 0; column_index < 8; column_index++) {
+			const PieceColour piece = rank.pieces[column_index];
+			const SquarePosition position = {rank_index, column_index};
+
+			if (piece.piece == PIECE_NONE) continue;
+
+			switch (piece.colour) {
+				case COL_WHITE: pieces_white |= position.get_bitboard_mask(); break;
+				case COL_BLACK: pieces_black |= position.get_bitboard_mask(); break;
+				default: break;
+			}
+
+			switch (piece.piece) {
+				case PIECE_KING:   pieces_kings   |= position.get_bitboard_mask(); break;
+				case PIECE_QUEEN:  pieces_queens  |= position.get_bitboard_mask(); break;
+				case PIECE_ROOK:   pieces_rooks   |= position.get_bitboard_mask(); break;
+				case PIECE_BISHOP: pieces_bishops |= position.get_bitboard_mask(); break;
+				case PIECE_KNIGHT: pieces_knights |= position.get_bitboard_mask(); break;
+				case PIECE_PAWN:   pieces_pawns   |= position.get_bitboard_mask(); break;
+				default: break;
+			}
+
+			pieces[piece_index].piece = std::make_unique<Piece>(piece.colour, piece.piece);
+			pieces[piece_index].position = position;
+			piece_index++;
+		}
+	}
+}
