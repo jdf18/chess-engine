@@ -11,6 +11,7 @@
 #include "piece.h"
 #include "bitboard.h"
 #include "fenparser.h"
+#include "castlingavailability.h"
 
 #define PIECE_ARRAY_KING 0
 #define PIECE_ARRAY_QUEEN 1
@@ -88,50 +89,7 @@ std::unordered_map<uint64_t, int> get_square_to_index_map();
 //     pieces_pawns: Has a bit where all the pawns are.
 
 class PieceInstance;
-
-struct CastlingAvailability {
-    union {
-        struct {
-            bool white_kingside;
-            bool white_queenside;
-            bool black_kingside;
-            bool black_queenside;
-        };
-        std::bitset<4> state;
-    };
-
-    CastlingAvailability() {
-        white_kingside = true;
-        white_queenside = true;
-        black_kingside = true;
-        black_queenside = true;
-    }
-
-    CastlingAvailability(const CastlingAvailability& copy) {
-        state = copy.state;
-    }
-
-    void remove_castle() {
-        white_kingside = false;
-        white_queenside = false;
-        black_kingside = false;
-        black_queenside = false;
-    }
-
-    bool castle_possible(const CastleType castle) const {
-        switch (castle) {
-            case CASTLE_WHITE_KINGSIDE:
-                return white_kingside;
-            case CASTLE_WHITE_QUEENSIDE:
-                return white_queenside;
-            case CASTLE_BLACK_KINGSIDE:
-                return black_kingside;
-            case CASTLE_BLACK_QUEENSIDE:
-                return black_queenside;
-        }
-        return false;
-    }
-};
+struct FenState;
 
 struct BoardState {
     PieceInstance pieces[36];
