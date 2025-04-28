@@ -38,14 +38,16 @@ bool parse_fen_rank(const char* fen, FenRank* fen_rank) {
 
     int index = 0;
     int rank_index = 0;
-    while (fen[index] != '\0' || fen[index] != '/' || fen[index] != ' ') {
+    while (!(fen[index] == '\0' || fen[index] == '/' || fen[index] == ' ')) {
         const PieceColour piece = char_to_piece(fen[index]);
 
         if (piece.piece == PIECE_NONE) {
             // should be a number
-            const int value = fen[index] - '0';
+            const uint8_t value = fen[index] - '0';
+            for (uint8_t i = 0; i < value; i++) {
+                fen_rank->pieces[rank_index + i] = PieceColour{PIECE_NONE, COL_NONE};
+            }
             rank_index += value;
-            // ? Might have to explicitly set each item to NONE
         } else {
             fen_rank->pieces[rank_index] = piece;
             rank_index++;
@@ -57,19 +59,19 @@ bool parse_fen_rank(const char* fen, FenRank* fen_rank) {
     return true;
 }
 
-bool fen_parser(const std::string& fen, FenState* state) {
+bool fen_parser(const std::string& fen, FenState& state) {
     int rank_index = 0;
 
-    parse_fen_rank(&fen[0], &state->ranks[0]);
+    parse_fen_rank(&fen[0], &state.ranks[0]);
     rank_index++;
     int i = 0;
 
     while (i < fen.length()) {
         if (fen[i] == '/') {
-            parse_fen_rank(&fen[i+1], &state->ranks[rank_index]);
+            parse_fen_rank(&fen[i+1], &state.ranks[rank_index]);
             rank_index++;
         } else if (fen[i] == ' ') {
-            parse_fen_rank(&fen[i+1], &state->ranks[rank_index]);
+            parse_fen_rank(&fen[i+1], &state.ranks[rank_index]);
             i++;
             break;
         }
@@ -77,33 +79,33 @@ bool fen_parser(const std::string& fen, FenState* state) {
         i++;
     }
 
-    state->is_white_to_move = (fen[i] == 'w');
+    state.is_white_to_move = (fen[i] == 'w');
     i += 2;
 
     if (fen[i] == '-') {
-        state->castling.white_kingside  = true;
-        state->castling.black_kingside  = true;
-        state->castling.white_queenside = true;
-        state->castling.black_queenside = true;
+        state.castling.white_kingside  = true;
+        state.castling.black_kingside  = true;
+        state.castling.white_queenside = true;
+        state.castling.black_queenside = true;
     } else {
-        state->castling.white_kingside  = false;
-        state->castling.black_kingside  = false;
-        state->castling.white_queenside = false;
-        state->castling.black_queenside = false;
+        state.castling.white_kingside  = false;
+        state.castling.black_kingside  = false;
+        state.castling.white_queenside = false;
+        state.castling.black_queenside = false;
 
         while (i < fen.length() && fen[i] != ' ') {
             switch (fen[i]) {
                 case 'K':
-                    state->castling.white_kingside = true;
+                    state.castling.white_kingside = true;
                     break;
                 case 'k':
-                    state->castling.black_kingside = true;
+                    state.castling.black_kingside = true;
                     break;
                 case 'Q':
-                    state->castling.white_queenside = true;
+                    state.castling.white_queenside = true;
                     break;
                 case 'q':
-                    state->castling.black_queenside = true;
+                    state.castling.black_queenside = true;
                     break;
                 default:
                     break;
@@ -122,7 +124,7 @@ bool fen_parser(const std::string& fen, FenState* state) {
 
         i++;
     }
-    state->halfmove_clock = halfmove;
+    state.halfmove_clock = halfmove;
     i += 2;
 
     uint16_t fullmove = 0;
@@ -133,7 +135,7 @@ bool fen_parser(const std::string& fen, FenState* state) {
 
         i++;
     }
-    state->fullmove_number = fullmove;
+    state.fullmove_number = fullmove;
 
     return true;
 }

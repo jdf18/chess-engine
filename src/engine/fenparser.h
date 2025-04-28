@@ -22,6 +22,6 @@ typedef struct {
     uint16_t fullmove_number;
 } FenState;
 
-bool fen_parser(std::string& fen, FenState& state);
+bool fen_parser(const std::string& fen, FenState& state);
 
 #endif //FENPARSER_H
