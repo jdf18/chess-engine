@@ -12,8 +12,11 @@ ENDIF()
 
 add_executable(Engine   
     src/engine/engine.cpp 
-    src/engine/boardstate.cpp
     src/engine/piece.cpp
-    src/engine/decisiontree.cpp
+    src/engine/movemaps.cpp
+    src/engine/boardstate.cpp
     src/engine/boardstateModifications.cpp
+    src/engine/boardstatePseudolegal.cpp
+    src/engine/fenparser.cpp
+    src/engine/decisiontree.cpp
 )

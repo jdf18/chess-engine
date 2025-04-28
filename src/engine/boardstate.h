@@ -6,10 +6,15 @@
 #include <unordered_map>
 #include <string>
 #include <optional>
+#include <cmath>
+#include <bit>
 
 #include "pieces.h"
 #include "piece.h"
 #include "bitboard.h"
+#include "fenparser.h"
+#include "castlingavailability.h"
+#include "movemaps.h"
 
 #define PIECE_ARRAY_KING 0
 #define PIECE_ARRAY_QUEEN 1
@@ -54,16 +59,13 @@ do { \
     arr[PIECE_ARRAY_BLACK_##offset].position = SquarePosition{7, file}; \
 }while(0)
 
-std::unordered_map<uint64_t, uint64_t> get_file_mask();
-std::unordered_map<uint64_t, uint64_t> get_rank_mask();
-std::unordered_map<uint64_t, uint64_t> get_diag_mask_ne();
-std::unordered_map<uint64_t, uint64_t> get_diag_mask_nw();
-std::unordered_map<uint16_t, uint8_t> get_rank_attacks();
-std::unordered_map<std::bitset<128>, uint64_t> get_diag_attacks_ne();
-std::unordered_map<std::bitset<128>, uint64_t> get_diag_attacks_nw();
-std::unordered_map<uint16_t, uint64_t> get_diag_attacks_ne_better();
-std::unordered_map<uint16_t, uint64_t> get_diag_attacks_nw_better();
-std::unordered_map<uint64_t, int> get_square_to_index_map();
+extern std::unordered_map<uint64_t, uint64_t> rank_masks;
+extern std::unordered_map<uint64_t, uint64_t> file_masks;
+extern std::unordered_map<uint64_t, uint64_t> diag_masks_ne;
+extern std::unordered_map<uint64_t, uint64_t> diag_masks_nw;
+extern std::unordered_map<uint16_t, uint8_t> rank_attacks_map;
+extern std::unordered_map<uint16_t, uint64_t> diag_attacks_ne;
+extern std::unordered_map<uint16_t, uint64_t> diag_attacks_nw;
 
 // bitboards: 64 bit unsigned integers, with 1 bit for each square of the board.
 //   There will be quite a few different bitboards, containing useful information.
@@ -87,50 +89,7 @@ std::unordered_map<uint64_t, int> get_square_to_index_map();
 //     pieces_pawns: Has a bit where all the pawns are.
 
 class PieceInstance;
-
-struct CastlingAvailability {
-    union {
-        struct {
-            bool white_kingside;
-            bool white_queenside;
-            bool black_kingside;
-            bool black_queenside;
-        };
-        std::bitset<4> state;
-    };
-
-    CastlingAvailability() {
-        white_kingside = true;
-        white_queenside = true;
-        black_kingside = true;
-        black_queenside = true;
-    }
-
-    CastlingAvailability(const CastlingAvailability& copy) {
-        state = copy.state;
-    }
-
-    void remove_castle() {
-        white_kingside = false;
-        white_queenside = false;
-        black_kingside = false;
-        black_queenside = false;
-    }
-
-    bool castle_possible(const CastleType castle) const {
-        switch (castle) {
-            case CASTLE_WHITE_KINGSIDE:
-                return white_kingside;
-            case CASTLE_WHITE_QUEENSIDE:
-                return white_queenside;
-            case CASTLE_BLACK_KINGSIDE:
-                return black_kingside;
-            case CASTLE_BLACK_QUEENSIDE:
-                return black_queenside;
-        }
-        return false;
-    }
-};
+struct FenState;
 
 struct BoardState {
     PieceInstance pieces[36];
@@ -215,33 +174,8 @@ struct BoardState {
         pieces_pawns(0),
         white_to_move(true) {}
 
-    void setup_default() {
-        pieces_white = BitBoard(FIRST_RANK | SECOND_RANK);
-        pieces_black = BitBoard(EIGHTH_RANK | SEVENTH_RANK);
-        pieces_kings = BitBoard((FIRST_RANK | EIGHTH_RANK) & FIFTH_FILE);
-        pieces_queens = BitBoard((FIRST_RANK | EIGHTH_RANK) & FOURTH_FILE);
-        pieces_rooks = BitBoard((FIRST_RANK | EIGHTH_RANK) & (FIRST_FILE | EIGHTH_FILE));
-        pieces_bishops = BitBoard((FIRST_RANK | EIGHTH_RANK) & (THIRD_FILE | SIXTH_FILE));
-        pieces_knights = BitBoard((FIRST_RANK | EIGHTH_RANK) & (SECOND_FILE | SEVENTH_FILE));
-        pieces_pawns = BitBoard(SECOND_RANK | SEVENTH_RANK);
-        white_to_move = true;
-
-        SET_PIECE_IN_ARRAY(pieces, KING, KING, 3);
-        SET_PIECE_IN_ARRAY(pieces, QUEEN, QUEEN, 4);
-        SET_PIECE_IN_ARRAY(pieces, ROOK_LEFT, ROOK, 0);
-        SET_PIECE_IN_ARRAY(pieces, ROOK_RIGHT, ROOK, 7);
-        SET_PIECE_IN_ARRAY(pieces, BISHOP_LEFT, BISHOP, 2);
-        SET_PIECE_IN_ARRAY(pieces, BISHOP_RIGHT, BISHOP, 5);
-        SET_PIECE_IN_ARRAY(pieces, KNIGHT_LEFT, KNIGHT, 1);
-        SET_PIECE_IN_ARRAY(pieces, KNIGHT_RIGHT, KNIGHT, 6);
-
-        for (uint8_t i = 0; i < 8; i++) {
-            pieces[PIECE_ARRAY_WHITE_PAWN_LEFTMOST + i].piece = std::make_unique<Piece>(COL_WHITE, PIECE_PAWN);
-            pieces[PIECE_ARRAY_WHITE_PAWN_LEFTMOST + i].position = SquarePosition{1, i};
-            pieces[PIECE_ARRAY_BLACK_PAWN_LEFTMOST + i].piece = std::make_unique<Piece>(COL_BLACK, PIECE_PAWN);
-            pieces[PIECE_ARRAY_BLACK_PAWN_LEFTMOST + i].position = SquarePosition{6, i};
-        }
-    }
+    void setup_default();
+    void setup_from_fen(const FenState &fen);
 };
 
 #endif //BOARDSTATE_H
