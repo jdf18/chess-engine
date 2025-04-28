@@ -112,5 +112,28 @@ bool fen_parser(const std::string& fen, FenState* state) {
             i++;
         }
     }
+    i += 2;
+
+    uint8_t halfmove = 0;
+    while (i < fen.length() && fen[i] != ' ') {
+        const int digit = fen[i] - '0';
+        halfmove *= 2;
+        halfmove += digit;
+
+        i++;
+    }
+    state->halfmove_clock = halfmove;
+    i += 2;
+
+    uint16_t fullmove = 0;
+    while (i < fen.length() && fen[i] != ' ') {
+        const int digit = fen[i] - '0';
+        fullmove *= 2;
+        fullmove += digit;
+
+        i++;
+    }
+    state->fullmove_number = fullmove;
+
     return true;
 }
