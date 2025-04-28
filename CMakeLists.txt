@@ -16,4 +16,5 @@ add_executable(Engine
     src/engine/piece.cpp
     src/engine/decisiontree.cpp
     src/engine/boardstateModifications.cpp
+    src/engine/fenparser.cpp
 )
