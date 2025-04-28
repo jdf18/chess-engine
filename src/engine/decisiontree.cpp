@@ -18,7 +18,14 @@ void DecisionTreeNode::generate_castle_moves() {
             new_data.board_state.move_castle(static_cast<CastleType>(castle_type_num));
 
             // update castling state
-            new_data.board_state.castling_state.remove_castle();
+            if (current_board->white_to_move) {
+                new_data.board_state.castling_state.white_kingside = false;
+                new_data.board_state.castling_state.white_queenside = false;
+            } else {
+                new_data.board_state.castling_state.black_kingside = false;
+                new_data.board_state.castling_state.black_queenside = false;
+            }
+
 
             add_child(new_data);
         }
