@@ -4,11 +4,6 @@ void DecisionTreeNode::add_child(NodeData child_data) {
     children.push_back(std::make_unique<DecisionTreeNode>(child_data));
 }
 
-// Move{SquarePosition{0,4}, SquarePosition{0, 1}},
-// Move{SquarePosition{0,4}, SquarePosition{0, 6}},
-// Move{SquarePosition{7,4}, SquarePosition{7, 1}},
-// Move{SquarePosition{7,4}, SquarePosition{7, 6}},
-
 void DecisionTreeNode::generate_castle_moves() {
     Move possible_move = {SquarePosition{0,4},SquarePosition{0,0}};
     CastleType type;
@@ -79,11 +74,13 @@ void DecisionTreeNode::generate_en_passant_moves() {
         };
 
         for (const Move& possible_move : possible_moves) {
+            if (possible_move.old_position.column > 7) continue;
             NodeData new_data{data.board_state};
             new_data.board_state.previous_move = possible_move;
             new_data.board_state.switch_turn();
 
             PieceInstance moving_piece = data.board_state.get_piece(possible_move.old_position);
+            if (moving_piece.piece->colour == COL_NONE) continue;
             if (moving_piece.piece->colour != (data.board_state.white_to_move ? COL_WHITE : COL_BLACK)) continue;
 
             new_data.board_state.move_piece(possible_move.old_position, possible_move.new_position);
@@ -103,6 +100,10 @@ void DecisionTreeNode::generate_promotion_moves(NodeData board_data, const Squar
 }
 
 void DecisionTreeNode::generate_moves() {
+    if (processed == NODE_CHILDREN_GENERATED) return;
+    // Don't bother generating moves if the parent move was illegal
+    if (data.legality == NODE_ILLEGAL) return;
+
     const BoardState* current_board = &data.board_state;
 
     generate_castle_moves();
@@ -124,6 +125,28 @@ void DecisionTreeNode::generate_moves() {
             } else add_child(new_data);
         }
     }
+    processed = NODE_CHILDREN_GENERATED;
+}
+
+void DecisionTreeNode::check_legality() {
+    // Dont redo everything if weve already worked this out
+    if (data.legality != NODE_PSEUDO_LEGAL) return;
+
+    const Colour enemy_colour = (data.last_player == COL_WHITE ? COL_BLACK : COL_WHITE);
+    BitBoard enemy_attack_surface = 0;
+    enemy_attack_surface |= data.board_state.pseudo_legal_king_moves(enemy_colour);
+    // enemy_attack_surface |= data.board_state.pseudo_legal_queen_moves(enemy_colour);
+    // enemy_attack_surface |= data.board_state.pseudo_legal_rook_moves(enemy_colour);
+    // enemy_attack_surface |= data.board_state.pseudo_legal_bishop_moves(enemy_colour);
+    enemy_attack_surface |= data.board_state.pseudo_legal_knight_moves(enemy_colour);
+    enemy_attack_surface |= data.board_state.pseudo_legal_pawn_moves(enemy_colour);
+
+    if ((enemy_attack_surface & data.board_state.pieces_kings &
+        (data.last_player == COL_WHITE ? data.board_state.pieces_white : data.board_state.pieces_black)).board == 0) {
+        data.legality = NODE_LEGAL;
+    } else {
+        data.legality = NODE_ILLEGAL;
+    };
 }
 
 
@@ -172,7 +195,7 @@ MoveEvaluated DecisionTreeNode::return_best_move(uint8_t depth) {
         //If it is white's turn to move, choose the move which gives the maximum evaluation
         if (data.board_state.white_to_move) {
             //Initialise the evaluation to negative infinity, so anything is better than it
-            result.evaluation = -INFINITY;
+            result.evaluation = -2000;
             //For every move, if its evaluation is greater than the current result's evaluation, choose it over the current result
             for (int i = 0; i < evaluated_moves.size(); i++) {
                 if (evaluated_moves[i].evaluation > result.evaluation) {
@@ -182,7 +205,7 @@ MoveEvaluated DecisionTreeNode::return_best_move(uint8_t depth) {
             }
             return result;
         }
-        result.evaluation = INFINITY;
+        result.evaluation = 2000;
         for (int i = 0; i < evaluated_moves.size(); i++) {
             if (evaluated_moves[i].evaluation < result.evaluation) {
                 result.evaluation = evaluated_moves[i].evaluation;
