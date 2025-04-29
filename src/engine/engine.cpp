@@ -36,6 +36,7 @@ int main() {
     tree.root = std::make_unique<DecisionTreeNode>(NodeData(initial_board_state));
     tree.root->data.board_state.print();
 
+
     std::cout << tree.root->children.size() << std::endl;
 
     tree.root->generate_moves();
@@ -50,6 +51,25 @@ int main() {
         tree.root->children[i]->check_legality();
         std::cout << (tree.root->children[i]->data.legality == NODE_LEGAL ? "LEGAL" : "ILLEGAL");
     }
+
+    BitBoard possible_moves = initial_board_state.pseudo_legal_pawn_moves(EIGHTH_FILE & SECOND_RANK);
+
+    possible_moves.out();
+
+    std::cout << std::endl;
+
+    BitBoard rook_pos = EIGHTH_FILE & FIRST_RANK;
+    rook_pos.out();
+
+    initial_board_state.pieces_white |= rook_pos;
+
+    std::cout << std::endl;
+    BitBoard rook_moves = initial_board_state.pseudo_legal_rook_moves(rook_pos);
+    rook_moves.out();
+
+    std::cout << std::endl;
+    BitBoard bishop_moves = initial_board_state.pseudo_legal_bishop_moves(rook_pos);
+    bishop_moves.out();
 
     return 0;
 }

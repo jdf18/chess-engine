@@ -20,7 +20,7 @@
 #define PIECE_ARRAY_KNIGHT_LEFT 6
 #define PIECE_ARRAY_KNIGHT_RIGHT 7
 #define PIECE_ARRAY_PAWN_LEFTMOST 8
-#define PIECE_ARRAY_PAWN_RIGHTMOST 15
+#define PIECE_ARRAY_PAWN_RIGHTMOST (PIECE_ARRAY_PAWN_LEFTMOST + 7)
 
 #define PIECE_ARRAY_WHITE_OFFSET 0
 #define PIECE_ARRAY_WHITE_KING              (PIECE_ARRAY_WHITE_OFFSET + PIECE_ARRAY_KING)
@@ -64,9 +64,6 @@ std::unordered_map<std::bitset<128>, uint64_t> get_diag_attacks_nw();
 std::unordered_map<uint16_t, uint64_t> get_diag_attacks_ne_better();
 std::unordered_map<uint16_t, uint64_t> get_diag_attacks_nw_better();
 std::unordered_map<uint64_t, int> get_square_to_index_map();
-
-
-
 
 // bitboards: 64 bit unsigned integers, with 1 bit for each square of the board.
 //   There will be quite a few different bitboards, containing useful information.
@@ -112,6 +109,27 @@ struct CastlingAvailability {
     CastlingAvailability(const CastlingAvailability& copy) {
         state = copy.state;
     }
+
+    void remove_castle() {
+        white_kingside = false;
+        white_queenside = false;
+        black_kingside = false;
+        black_queenside = false;
+    }
+
+    bool castle_possible(const CastleType castle) const {
+        switch (castle) {
+            case CASTLE_WHITE_KINGSIDE:
+                return white_kingside;
+            case CASTLE_WHITE_QUEENSIDE:
+                return white_queenside;
+            case CASTLE_BLACK_KINGSIDE:
+                return black_kingside;
+            case CASTLE_BLACK_QUEENSIDE:
+                return black_queenside;
+        }
+        return false;
+    }
 };
 
 struct BoardState {
@@ -143,14 +161,27 @@ struct BoardState {
         return (squares & (pieces_white | pieces_black)).board != 0;
     };
 
-    BitBoard pseudo_legal_king_moves(Colour colour);
-    BitBoard pseudo_legal_queen_moves(Colour colour, BitBoard square);
-    BitBoard pseudo_legal_rook_moves(Colour colour, BitBoard square);
-    BitBoard pseudo_legal_knight_moves(Colour colour);
-    BitBoard pseudo_legal_bishop_moves(Colour colour, BitBoard square);
-    BitBoard pseudo_legal_pawn_moves(Colour colour);
+    //All of these methods take a bitboard with a single bit for the position of the piece.
+    //They return the pseudo legal moves for a piece of that type at the position given.
+    //They assume that the piece is actually there, as they require that to get the colour.
+    BitBoard pseudo_legal_king_moves(BitBoard square) const;
+    BitBoard pseudo_legal_queen_moves(BitBoard square) const;
+    BitBoard pseudo_legal_rook_moves(BitBoard square) const;
+    BitBoard pseudo_legal_knight_moves(BitBoard square) const;
+    BitBoard pseudo_legal_bishop_moves(BitBoard square) const;
+    BitBoard pseudo_legal_pawn_moves(BitBoard square) const;
 
-    PieceInstance get_piece(uint8_t row, uint8_t column);
+    PieceInstance get_piece(SquarePosition position) const;
+    PieceInstance get_piece(uint8_t row, uint8_t column) const;
+    PieceInstance* get_piece_ptr(SquarePosition position);
+    PieceInstance* get_piece_ptr(uint8_t row, uint8_t column);
+
+    bool is_move_castle_valid(const Move& move) const;
+    // bool is_move_en_passant_valid(const Move& move) const;
+
+    bool move_piece(SquarePosition start_position, SquarePosition end_position);
+    bool move_castle(CastleType move);
+    bool remove_piece(const SquarePosition position);
 
     void print();
     std::string get_fen();
@@ -204,7 +235,7 @@ struct BoardState {
         SET_PIECE_IN_ARRAY(pieces, KNIGHT_LEFT, KNIGHT, 1);
         SET_PIECE_IN_ARRAY(pieces, KNIGHT_RIGHT, KNIGHT, 6);
 
-        for (uint8_t i = 0; i < 7; i++) {
+        for (uint8_t i = 0; i < 8; i++) {
             pieces[PIECE_ARRAY_WHITE_PAWN_LEFTMOST + i].piece = std::make_unique<Piece>(COL_WHITE, PIECE_PAWN);
             pieces[PIECE_ARRAY_WHITE_PAWN_LEFTMOST + i].position = SquarePosition{1, i};
             pieces[PIECE_ARRAY_BLACK_PAWN_LEFTMOST + i].piece = std::make_unique<Piece>(COL_BLACK, PIECE_PAWN);

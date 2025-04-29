@@ -43,6 +43,8 @@ public:
 
     explicit DecisionTreeNode(const NodeData& node_data) : data(node_data) {};
 
+    void generate_castle_moves();
+    void generate_en_passant_moves();
     void generate_moves();
     void check_legality();
 
