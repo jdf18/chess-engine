@@ -74,11 +74,13 @@ void DecisionTreeNode::generate_en_passant_moves() {
         };
 
         for (const Move& possible_move : possible_moves) {
+            if (possible_move.old_position.column > 7) continue;
             NodeData new_data{data.board_state};
             new_data.board_state.previous_move = possible_move;
             new_data.board_state.switch_turn();
 
             PieceInstance moving_piece = data.board_state.get_piece(possible_move.old_position);
+            if (moving_piece.piece->colour == COL_NONE) continue;
             if (moving_piece.piece->colour != (data.board_state.white_to_move ? COL_WHITE : COL_BLACK)) continue;
 
             new_data.board_state.move_piece(possible_move.old_position, possible_move.new_position);
@@ -193,7 +195,7 @@ MoveEvaluated DecisionTreeNode::return_best_move(uint8_t depth) {
         //If it is white's turn to move, choose the move which gives the maximum evaluation
         if (data.board_state.white_to_move) {
             //Initialise the evaluation to negative infinity, so anything is better than it
-            result.evaluation = -INFINITY;
+            result.evaluation = -2000;
             //For every move, if its evaluation is greater than the current result's evaluation, choose it over the current result
             for (int i = 0; i < evaluated_moves.size(); i++) {
                 if (evaluated_moves[i].evaluation > result.evaluation) {
@@ -203,7 +205,7 @@ MoveEvaluated DecisionTreeNode::return_best_move(uint8_t depth) {
             }
             return result;
         }
-        result.evaluation = INFINITY;
+        result.evaluation = 2000;
         for (int i = 0; i < evaluated_moves.size(); i++) {
             if (evaluated_moves[i].evaluation < result.evaluation) {
                 result.evaluation = evaluated_moves[i].evaluation;
