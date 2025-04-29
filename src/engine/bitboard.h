@@ -41,34 +41,11 @@ struct BitBoard {
         board = 0;
     }
 
-    inline BitBoard reverse() {
-        uint64_t rev = 0;
-        uint64_t board_copy = board;
-        for (int i = 0; i < 64; i++) {
-            rev <<= 1;
+    BitBoard reverse();
 
-            if ((board_copy & 1) == 1) {
-                rev ^= 1;
-            }
+    void out();
 
-            board_copy >>= 1;
-        }
-        return BitBoard(rev);
-    }
-
-    inline void out() {
-        BitBoard to_out = reverse();
-        std::cout << std::bitset<8>((to_out.board & FIRST_RANK  )      ).to_string() << std::endl;
-        std::cout << std::bitset<8>((to_out.board & SECOND_RANK ) >> 8 ).to_string() << std::endl;
-        std::cout << std::bitset<8>((to_out.board & THIRD_RANK  ) >> 16).to_string() << std::endl;
-        std::cout << std::bitset<8>((to_out.board & FOURTH_RANK ) >> 24).to_string() << std::endl;
-        std::cout << std::bitset<8>((to_out.board & FIFTH_RANK  ) >> 32).to_string() << std::endl;
-        std::cout << std::bitset<8>((to_out.board & SIXTH_RANK  ) >> 40).to_string() << std::endl;
-        std::cout << std::bitset<8>((to_out.board & SEVENTH_RANK) >> 48).to_string() << std::endl;
-        std::cout << std::bitset<8>((to_out.board & EIGHTH_RANK ) >> 56).to_string() << std::endl;
-
-
-    }
+    uint8_t count_set_bits();
 };
 
 inline BitBoard operator &(BitBoard lhs, BitBoard rhs) {
