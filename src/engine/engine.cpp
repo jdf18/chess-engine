@@ -22,20 +22,5 @@ int main() {
     MoveEvaluated move = tree.root.get()->return_best_move(3);
     move.move.value().print();
 
-
-    std::cout << tree.root->children.size() << std::endl;
-
-    tree.root->generate_moves();
-
-    std::cout << tree.root->children.size() << std::endl;
-    for (int i = 0; i < tree.root->children.size(); i++) {
-        Move move = tree.root->children[i]->data.board_state.previous_move.value();
-        std::cout << std::endl;
-        move.print();
-        std::cout << std::endl;
-        tree.root->children[i]->data.board_state.print();
-        tree.root->children[i]->check_legality();
-        std::cout << (tree.root->children[i]->data.legality == NODE_LEGAL ? "LEGAL" : "ILLEGAL");
-    }
     return 0;
 }
