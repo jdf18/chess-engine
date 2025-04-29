@@ -14,7 +14,9 @@ typedef struct NodeData {
 
     bool initialise_node(); // Returns if the move was valid or not
 
-    int evaluate();
+    float evaluate();
+
+    float material_sum(Colour col);
 } NodeData;
 
 typedef class DecisionTreeNode {
@@ -35,7 +37,7 @@ public:
     void generate_en_passant_moves();
     void generate_moves();
 
-    MoveEvaluated return_best_move(uint8_t depth, Colour player);
+    MoveEvaluated return_best_move(uint8_t depth);
 
 private:
     void add_child(NodeData child_data);

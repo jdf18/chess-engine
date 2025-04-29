@@ -3,8 +3,8 @@
 #include <iostream>
 #include <bitset>
 
-#include "decisiontree.h"
 #include "fenparser.h"
+#include "pieces.h"
 
 std::string get_best_move(std::string fen) {
     FenState fen_state;
@@ -15,7 +15,11 @@ std::string get_best_move(std::string fen) {
     DecisionTree tree;
     tree.root = std::make_unique<DecisionTreeNode>(NodeData(board_state));
 
-    return ""; //todo: link to minmax algorithm later
+    MoveEvaluated move = tree.root.get()->return_best_move(3);
+    std::string move_uci = move.move.value().ucistr();
+
+    return move_uci; //todo: link to minmax algorithm later
+
 }
 
 // int main() {

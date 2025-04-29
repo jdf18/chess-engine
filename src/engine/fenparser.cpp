@@ -71,7 +71,6 @@ bool fen_parser(const std::string& fen, FenState& state) {
             parse_fen_rank(&fen[i+1], &state.ranks[rank_index]);
             rank_index++;
         } else if (fen[i] == ' ') {
-            parse_fen_rank(&fen[i+1], &state.ranks[rank_index]);
             i++;
             break;
         }
@@ -82,16 +81,12 @@ bool fen_parser(const std::string& fen, FenState& state) {
     state.is_white_to_move = (fen[i] == 'w');
     i += 2;
 
-    if (fen[i] == '-') {
-        state.castling.white_kingside  = true;
-        state.castling.black_kingside  = true;
-        state.castling.white_queenside = true;
-        state.castling.black_queenside = true;
-    } else {
-        state.castling.white_kingside  = false;
-        state.castling.black_kingside  = false;
-        state.castling.white_queenside = false;
-        state.castling.black_queenside = false;
+    state.castling.white_kingside = false;
+    state.castling.black_kingside = false;
+    state.castling.white_queenside = false;
+    state.castling.black_queenside = false;
+
+    if (fen[i] != '-') {
 
         while (i < fen.length() && fen[i] != ' ') {
             switch (fen[i]) {
