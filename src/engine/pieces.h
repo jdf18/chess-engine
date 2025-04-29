@@ -79,6 +79,15 @@ typedef struct Move {
         std::cout << " -> ";
         new_position.print();
     }
+    std::string ucistr() const {
+        char uci[5];
+        uci[0] = (char)old_position.column + 'a';
+        uci[1] = (char)old_position.row + '0';
+        uci[2] = (char)new_position.column + 'a';
+        uci[3] = (char)new_position.row + '0';
+        uci[4] = '\0';
+        return uci;
+    }
 } Move;
 
 struct MoveEvaluated {

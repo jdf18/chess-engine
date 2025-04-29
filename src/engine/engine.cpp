@@ -15,7 +15,7 @@ std::string get_best_move(std::string fen) {
     DecisionTree tree;
     tree.root = std::make_unique<DecisionTreeNode>(NodeData(board_state));
 
-    MoveEvaluated move = tree.root.get()->return_best_move(3);
+    MoveEvaluated move = tree.root.get()->return_best_move(1);
     std::string move_uci = move.move.value().ucistr();
 
     return move_uci; //todo: link to minmax algorithm later
