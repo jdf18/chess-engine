@@ -1,41 +1,30 @@
 #include "boardstate.h"
 
-#define CASTLE_KINGSIDE_COL_DELTA (-2)
-#define CASTLE_QUEENSIDE_COL_DELTA 3
-
-bool BoardState::is_move_castle_valid(const Move& move) const {
+bool BoardState::is_move_castle_valid(const Move& move, const CastleType castle) const {
+    const Colour moving_colour = castle.colour;
+    const CastleSide castle_side = castle.side;
     // Test to see if piece being moved is a king
     if ((pieces_kings & move.old_position.get_bitboard_mask()).board == 0) return false;
 
-    // if end square correct and satisfies castle rights
+    // if end square correct row
     if (move.new_position.row != move.old_position.row) return false;
 
-    // Find out the colour of the piece being moved
-    Colour moving_colour = COL_NONE;
-    if ((pieces_white & move.old_position.get_bitboard_mask()).board != 0) moving_colour = COL_WHITE;
-    else if ((pieces_black & move.old_position.get_bitboard_mask()).board != 0) moving_colour = COL_BLACK;
-
-    const uint8_t delta = abs(move.new_position.column - move.old_position.column);
-    if (delta == 0) std::cout << "Invalid move (moving to same position)";
-
     BitBoard mask;
-    if (delta == CASTLE_KINGSIDE_COL_DELTA) {
-        mask = SECOND_FILE | THIRD_FILE;
-    } else if (delta == CASTLE_KINGSIDE_COL_DELTA) {
-        mask = FIFTH_FILE | SIXTH_FILE | SEVENTH_FILE;
+    if (castle_side == CASTLE_KINGSIDE) {
+        mask = SIXTH_FILE | SEVENTH_FILE;
+    } else if (castle_side == CASTLE_QUEENSIDE) {
+        mask = SECOND_FILE | THIRD_FILE | FOURTH_FILE;
     } else return false;
-    if (moving_colour == COL_BLACK) mask = mask << BOARD_ROW*7;
-    if (((pieces_white | pieces_black) & mask).board != 0) return false;
 
-    if (moving_colour == COL_WHITE && white_to_move) {
-        if (castling_state.white_kingside  && (delta == CASTLE_KINGSIDE_COL_DELTA))  return true;
-        if (castling_state.white_queenside && (delta == CASTLE_QUEENSIDE_COL_DELTA)) return true;
-    } else if (moving_colour == COL_BLACK && !white_to_move) {
-        if (castling_state.black_kingside  && (delta == CASTLE_KINGSIDE_COL_DELTA))  return true;
-        if (castling_state.black_queenside && (delta == CASTLE_QUEENSIDE_COL_DELTA)) return true;
+    switch (moving_colour) {
+        case COL_WHITE: mask &= FIRST_RANK; break;
+        case COL_BLACK: mask &= EIGHTH_RANK; break;
+        default: return false;
     }
 
-    return false;
+    if (((pieces_white | pieces_black) & mask).board != 0) return false;
+
+    return castling_state.castle_possible(castle);
 }
 
 // ? Possibly not required
@@ -55,7 +44,7 @@ PieceInstance BoardState::get_piece(const SquarePosition position) const {
     return get_piece(position.row, position.column);
 }
 PieceInstance BoardState::get_piece(const uint8_t row, const uint8_t column) const {
-    const BitBoard square_mask = (static_cast<uint64_t>(0x1) << (row + (8 * column)));
+    const BitBoard square_mask = SquarePosition{row, column}.get_bitboard_mask();
     Colour piece_colour;
 
     if ((pieces_white & square_mask).board != 0) {
@@ -164,47 +153,41 @@ bool BoardState::move_piece(const SquarePosition start_position, const SquarePos
     return true;
 }
 
-inline Colour get_castle_colour(const CastleType move) {
-    return ((move == CASTLE_WHITE_KINGSIDE) || (move == CASTLE_WHITE_QUEENSIDE) ? COL_WHITE : COL_BLACK);
-}
-
-inline CastleSide get_castle_side(const CastleType move) {
-    return ((move == CASTLE_WHITE_KINGSIDE) || (move == CASTLE_BLACK_KINGSIDE) ? CASTLE_KINGSIDE : CASTLE_QUEENSIDE);
-}
-
 BitBoard get_castle_xor_mask(const CastleType move) {
-    switch (move) {
-        case CASTLE_WHITE_KINGSIDE:
-            return FIRST_RANK & (FIRST_FILE | SECOND_FILE | THIRD_FILE | FOURTH_FILE);
-        case CASTLE_WHITE_QUEENSIDE:
-            return FIRST_RANK & (FOURTH_FILE | FIFTH_FILE | SIXTH_FILE | EIGHTH_FILE);
-        case CASTLE_BLACK_KINGSIDE:
-            return EIGHTH_RANK & (FIRST_FILE | SECOND_FILE | THIRD_FILE | FOURTH_FILE);
-        case CASTLE_BLACK_QUEENSIDE:
-            return EIGHTH_RANK & (FOURTH_FILE | FIFTH_FILE | SIXTH_FILE | EIGHTH_FILE);
+    BitBoard mask;
+    if (move.side == CASTLE_KINGSIDE) {
+        mask = (FIRST_FILE | SECOND_FILE | THIRD_FILE | FOURTH_FILE);
+    } else {
+        mask = (FOURTH_FILE | FIFTH_FILE | SIXTH_FILE | EIGHTH_FILE);
     }
-    return 0;
+
+    if (move.colour == COL_WHITE) {
+        return mask & FIRST_RANK;
+    }
+    return mask & EIGHTH_RANK;
 }
 
 bool BoardState::move_castle(const CastleType move) {
-    const Colour move_colour = get_castle_colour(move);
-    const CastleSide side = get_castle_side(move);
+    const Colour move_colour = move.colour;
+    const CastleSide side = move.side;
 
-    PieceInstance* moving_king = get_piece_ptr((move_colour == COL_WHITE ? 0 : 7), 3);
+    // move piece objects
+    PieceInstance* moving_king = get_piece_ptr((move_colour == COL_WHITE ? 0 : 7), 4);
     PieceInstance* moving_rook = get_piece_ptr((move_colour == COL_WHITE ? 0 : 7), (side == CASTLE_KINGSIDE ? 0 : 7));
 
-    moving_king->position.column = (side == CASTLE_KINGSIDE ? 1 : 5);
-    moving_rook->position.column = (side == CASTLE_KINGSIDE ? 2 : 4);
+    moving_king->position = SquarePosition{moving_king->position.row, static_cast<unsigned char>(side == CASTLE_KINGSIDE ? 1 : 5)};
+    moving_rook->position = SquarePosition{moving_king->position.row, static_cast<unsigned char>(side == CASTLE_KINGSIDE ? 2 : 4)};
 
-    const BitBoard mask = (move_colour == COL_WHITE ? FIRST_RANK : EIGHTH_RANK);
+    // change bitboards
+    const BitBoard colour_mask = (move_colour == COL_WHITE ? FIRST_RANK : EIGHTH_RANK);
+    const BitBoard kings_mask = (FIFTH_FILE | (side == CASTLE_KINGSIDE ? THIRD_FILE : SEVENTH_FILE));
+    const BitBoard rooks_mask = (side == CASTLE_KINGSIDE ? FIRST_FILE | FOURTH_FILE : SIXTH_FILE | EIGHTH_FILE);
 
-    if (move_colour == COL_WHITE) pieces_white ^= mask & (side == CASTLE_KINGSIDE ?
-        (FIRST_FILE | SECOND_FILE | THIRD_FILE | FOURTH_FILE) : (FOURTH_FILE | FIFTH_FILE | SIXTH_FILE | EIGHTH_FILE));
-    else pieces_black ^= mask & (side == CASTLE_KINGSIDE ?
-        (FIRST_FILE | SECOND_FILE | THIRD_FILE | FOURTH_FILE) : (FOURTH_FILE | FIFTH_FILE | SIXTH_FILE | EIGHTH_FILE));
+    if (move_colour == COL_WHITE) pieces_white ^= colour_mask & (kings_mask | rooks_mask);
+    else pieces_black ^= colour_mask & (kings_mask | rooks_mask);
 
-    pieces_kings ^= mask & (FOURTH_FILE | (side == CASTLE_KINGSIDE ? SECOND_FILE : SIXTH_FILE));
-    pieces_rooks ^= mask & (side == CASTLE_KINGSIDE ? FIRST_FILE | THIRD_FILE : FIFTH_FILE | EIGHTH_FILE);
+    pieces_kings ^= colour_mask & kings_mask;
+    pieces_rooks ^= colour_mask & rooks_mask;
 
     return true;
 }

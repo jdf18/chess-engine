@@ -8,19 +8,11 @@ typedef enum {
     CASTLE_QUEENSIDE
 } CastleSide;
 
-typedef enum {
-    CASTLE_WHITE_KINGSIDE = 0,
-    CASTLE_WHITE_QUEENSIDE = 1,
-    CASTLE_BLACK_KINGSIDE = 2,
-    CASTLE_BLACK_QUEENSIDE = 3
+typedef struct  {
+    Colour colour;
+    CastleSide side;
 } CastleType;
 
-const Move castle_moves[4] = { // indexes to match CastleType
-    Move{SquarePosition{0,4}, SquarePosition{0, 1}},
-    Move{SquarePosition{0,4}, SquarePosition{0, 6}},
-    Move{SquarePosition{7,4}, SquarePosition{7, 1}},
-    Move{SquarePosition{7,4}, SquarePosition{7, 6}},
-};
 
 struct CastlingAvailability {
     union {
@@ -42,6 +34,10 @@ struct CastlingAvailability {
 
     CastlingAvailability(const CastlingAvailability& copy) {
         state = copy.state;
+        white_kingside = copy.white_kingside;
+        white_queenside = copy.white_queenside;
+        black_kingside = copy.black_kingside;
+        black_queenside = copy.black_queenside;
     }
 
     void remove_castle() {
@@ -52,15 +48,20 @@ struct CastlingAvailability {
     }
 
     bool castle_possible(const CastleType castle) const {
-        switch (castle) {
-            case CASTLE_WHITE_KINGSIDE:
-                return white_kingside;
-            case CASTLE_WHITE_QUEENSIDE:
-                return white_queenside;
-            case CASTLE_BLACK_KINGSIDE:
-                return black_kingside;
-            case CASTLE_BLACK_QUEENSIDE:
-                return black_queenside;
+        switch (castle.colour) {
+            case COL_WHITE:
+                switch (castle.side) {
+                    case CASTLE_KINGSIDE: return white_kingside;
+                    case CASTLE_QUEENSIDE: return white_queenside;
+                }
+                break;
+            case COL_BLACK:
+                switch (castle.side) {
+                    case CASTLE_KINGSIDE: return black_kingside;
+                    case CASTLE_QUEENSIDE: return black_queenside;
+                }
+                break;
+            default: return false;
         }
         return false;
     }

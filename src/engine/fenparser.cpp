@@ -114,6 +114,21 @@ bool fen_parser(const std::string& fen, FenState& state) {
             i++;
         }
     }
+    i += 1;
+
+    if (fen[i] != '-') {
+        // en passant target square location
+        const uint8_t column = fen[i] - 'a';
+        i++;
+        const uint8_t row = fen[i] - '1';
+
+        const int forwards = (state.is_white_to_move ? -1 : 1);
+        const SquarePosition old_position = {static_cast<uint8_t>(row - forwards), column};
+        const SquarePosition new_position = {static_cast<uint8_t>(row + forwards), column};
+        state.previous_move.emplace(Move {old_position, new_position});
+    } else {
+        state.previous_move.reset();
+    }
     i += 2;
 
     uint8_t halfmove = 0;

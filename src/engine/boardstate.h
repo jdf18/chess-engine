@@ -135,7 +135,7 @@ struct BoardState {
     PieceInstance* get_piece_ptr(SquarePosition position);
     PieceInstance* get_piece_ptr(uint8_t row, uint8_t column);
 
-    bool is_move_castle_valid(const Move& move) const;
+    bool is_move_castle_valid(const Move &move, CastleType castle) const;
     // bool is_move_en_passant_valid(const Move& move) const;
 
     bool move_piece(SquarePosition start_position, SquarePosition end_position);
