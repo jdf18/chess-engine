@@ -4,26 +4,54 @@ void DecisionTreeNode::add_child(NodeData child_data) {
     children.push_back(std::make_unique<DecisionTreeNode>(child_data));
 }
 
+// Move{SquarePosition{0,4}, SquarePosition{0, 1}},
+// Move{SquarePosition{0,4}, SquarePosition{0, 6}},
+// Move{SquarePosition{7,4}, SquarePosition{7, 1}},
+// Move{SquarePosition{7,4}, SquarePosition{7, 6}},
+
 void DecisionTreeNode::generate_castle_moves() {
-    const BoardState* current_board = &data.board_state;
-
-    // possible moves for castling
-    for (int castle_type_num = CASTLE_WHITE_KINGSIDE; castle_type_num != CASTLE_BLACK_QUEENSIDE; castle_type_num++) {
-        const Move possible_move = castle_moves[castle_type_num];
-        NodeData new_data{data.board_state};
-        new_data.board_state.previous_move = possible_move;
-        new_data.board_state.switch_turn();
-
-        if (new_data.board_state.is_move_castle_valid(possible_move)) {
-            // move pieces
-            new_data.board_state.move_castle(static_cast<CastleType>(castle_type_num));
-
-            // update castling state
-            new_data.board_state.castling_state.remove_castle();
-
-            add_child(new_data);
+    Move possible_move = {SquarePosition{0,4},SquarePosition{0,0}};
+    CastleType type;
+    for (const Colour colour : {COL_WHITE, COL_BLACK}) {
+        switch (colour) {
+            case COL_WHITE:
+                possible_move.old_position.row = 0;
+                possible_move.new_position.row = 0;
+                break;
+            case COL_BLACK:
+                possible_move.old_position.row = 7;
+                possible_move.new_position.row = 7;
+                break;
+            default: break;
         }
 
+        if (colour != (data.board_state.white_to_move ? COL_WHITE : COL_BLACK)) continue;
+
+        for (const CastleSide side : {CASTLE_KINGSIDE, CASTLE_QUEENSIDE}) {
+            switch (colour) {
+                case CASTLE_KINGSIDE:
+                    possible_move.new_position.column = 6;
+                    break;
+                case CASTLE_QUEENSIDE:
+                    possible_move.new_position.column = 1;
+                    break;
+                default: break;
+            }
+
+            NodeData new_data{data.board_state};
+            new_data.board_state.previous_move = possible_move;
+            new_data.board_state.switch_turn();
+
+            if (new_data.board_state.is_move_castle_valid(possible_move, CastleType{colour, side})) {
+                // move pieces
+                new_data.board_state.move_castle(CastleType{colour, side});
+
+                // update castling state
+                new_data.board_state.castling_state.remove_castle();
+
+                add_child(new_data);
+            }
+        }
     }
 }
 

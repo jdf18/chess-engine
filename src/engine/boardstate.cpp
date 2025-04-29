@@ -1,8 +1,8 @@
 #include "boardstate.h"
 
 void BoardState::print() {
-	for (uint8_t column = 7; column < 8; column--) {
-		for (uint8_t row = 0; row < 8; row++) {
+	for (uint8_t row = 7; row < 8; row--) {
+		for (uint8_t column = 0; column < 8; column++) {
 			const PieceInstance piece_instance = get_piece(row, column);
 			char piece_character = ' ';
 			switch (piece_instance.piece->type) {
