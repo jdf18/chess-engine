@@ -94,6 +94,16 @@ void DecisionTreeNode::generate_en_passant_moves() {
     }
 }
 
+void DecisionTreeNode::generate_promotion_moves(NodeData board_data, SquarePosition pawn_position) {
+    board_data.board_state.promote_piece(pawn_position, PIECE_QUEEN);
+    add_child(board_data);
+    board_data.board_state.promote_piece(pawn_position, PIECE_ROOK);
+    add_child(board_data);
+    board_data.board_state.promote_piece(pawn_position, PIECE_BISHOP);
+    add_child(board_data);
+    board_data.board_state.promote_piece(pawn_position, PIECE_KNIGHT);
+    add_child(board_data);
+}
 
 void DecisionTreeNode::generate_moves() {
     const BoardState* current_board = &data.board_state;
@@ -112,7 +122,9 @@ void DecisionTreeNode::generate_moves() {
 
             new_data.board_state.move_piece(possible_move.old_position, possible_move.new_position);
 
-            add_child(new_data);
+            if (piece_instance->piece->type == PIECE_PAWN && (piece_instance->position.row == 0 || piece_instance->position.row == 7)) {
+                generate_promotion_moves(new_data, piece_instance->position);
+            } else add_child(new_data);
         }
     }
 }
