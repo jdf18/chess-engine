@@ -51,6 +51,7 @@ public:
 
     void generate_castle_moves();
     void generate_en_passant_moves();
+    void generate_promotion_moves(NodeData board_data, SquarePosition pawn_position);
     void generate_moves();
     void check_legality();
 
