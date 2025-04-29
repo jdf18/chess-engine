@@ -3,8 +3,8 @@
 #include <iostream>
 #include <bitset>
 
-#include "decisiontree.h"
 #include "fenparser.h"
+#include "pieces.h"
 
 int main() {
     FenState fen_state;
@@ -20,18 +20,10 @@ int main() {
 
     DecisionTree tree;
     tree.root = std::make_unique<DecisionTreeNode>(NodeData(fen_board_state));
+    MoveEvaluated move = tree.root.get()->return_best_move(3);
+    move.move.value().print();
 
-    tree.root->generate_moves();
-    // tree.root->generate_castle_moves();
 
-    std::cout << "GENERATED MOVES";
-    for (int i = 0; i < tree.root->children.size(); i++) {
-        Move move = tree.root->children[i]->data.board_state.previous_move.value();
-        move.print();
-        std::cout << std::endl;
-        tree.root->children[i]->data.board_state.print();
-        std::cout << std::endl;
-    }
 
     return 0;
 }
