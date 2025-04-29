@@ -71,7 +71,6 @@ bool fen_parser(const std::string& fen, FenState& state) {
             parse_fen_rank(&fen[i+1], &state.ranks[rank_index]);
             rank_index++;
         } else if (fen[i] == ' ') {
-            parse_fen_rank(&fen[i+1], &state.ranks[rank_index]);
             i++;
             break;
         }
