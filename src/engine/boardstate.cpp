@@ -1,7 +1,7 @@
 #include "boardstate.h"
 
 void BoardState::print() {
-	for (uint8_t column = 0; column < 8; column++) {
+	for (uint8_t column = 7; column < 8; column--) {
 		for (uint8_t row = 0; row < 8; row++) {
 			const PieceInstance piece_instance = get_piece(row, column);
 			char piece_character = ' ';
@@ -188,4 +188,10 @@ void BoardState::setup_from_fen(const FenState &fen) {
 			piece_index++;
 		}
 	}
+
+	white_to_move = fen.is_white_to_move;
+	castling_state = fen.castling;
+	previous_move = fen.previous_move;
+
+	//todo: fullmove and halfmove
 }

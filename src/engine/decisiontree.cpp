@@ -12,6 +12,7 @@ void DecisionTreeNode::generate_castle_moves() {
         const Move possible_move = castle_moves[castle_type_num];
         NodeData new_data{data.board_state};
         new_data.board_state.previous_move = possible_move;
+        new_data.board_state.switch_turn();
 
         if (new_data.board_state.is_move_castle_valid(possible_move)) {
             // move pieces
@@ -49,8 +50,10 @@ void DecisionTreeNode::generate_en_passant_moves() {
         for (const Move& possible_move : possible_moves) {
             NodeData new_data{data.board_state};
             new_data.board_state.previous_move = possible_move;
+            new_data.board_state.switch_turn();
 
-            // new_data.board_state.is_move_en_passant_valid(possible_move)
+            PieceInstance moving_piece = data.board_state.get_piece(possible_move.old_position);
+            if (moving_piece.piece->colour != (data.board_state.white_to_move ? COL_WHITE : COL_BLACK)) continue;
 
             new_data.board_state.move_piece(possible_move.old_position, possible_move.new_position);
             new_data.board_state.remove_piece(passant_taken_pawn);
@@ -69,10 +72,13 @@ void DecisionTreeNode::generate_moves() {
 
     for (uint8_t i = 0; i < 32; i++) {
         PieceInstance* piece_instance = &data.board_state.pieces[i];
+        if (piece_instance->piece->colour != (data.board_state.white_to_move ? COL_WHITE : COL_BLACK)) continue;
+
         piece_instance->position.print();
         for (const Move& possible_move : piece_instance->generateMoves(current_board)) {
             NodeData new_data{data.board_state};
             new_data.board_state.previous_move = possible_move;
+            new_data.board_state.switch_turn();
 
             new_data.board_state.move_piece(possible_move.old_position, possible_move.new_position);
 
