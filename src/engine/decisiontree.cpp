@@ -96,14 +96,41 @@ float NodeData::material_sum(Colour col) {
     BitBoard col_pieces = col == COL_WHITE ? board_state.pieces_white : board_state.pieces_black;
     float result = 0;
     result += (col_pieces & board_state.pieces_kings).count_set_bits() * 1000; // King value
-    result += (col_pieces & board_state.pieces_queens).count_set_bits() * 9.5; // Queen value
-    result += (col_pieces & board_state.pieces_rooks).count_set_bits() * 5.63; // Rook value
-    result += (col_pieces & board_state.pieces_knights).count_set_bits() * 3.05; // Knight value
-    result += (col_pieces & board_state.pieces_bishops).count_set_bits() * 3.33; // Bishop value
+    result += (col_pieces & board_state.pieces_queens).count_set_bits() * 9.5f; // Queen value
+    result += (col_pieces & board_state.pieces_rooks).count_set_bits() * 5.63f; // Rook value
+    result += (col_pieces & board_state.pieces_knights).count_set_bits() * 3.05f; // Knight value
+    result += (col_pieces & board_state.pieces_bishops).count_set_bits() * 3.33f; // Bishop value
     result += (col_pieces & board_state.pieces_pawns).count_set_bits() * 1; // Pawn value
     return result;
 }
 
 float NodeData::evaluate() {
     return material_sum(COL_WHITE) - material_sum(COL_BLACK);
+}
+
+MoveEvaluated DecisionTreeNode::return_best_move(uint8_t depth) {
+    MoveEvaluated result;
+    if (depth == 0) {
+        result.evaluation = data.evaluate();
+        return result;
+    }
+    else {
+        generate_moves();
+        std::vector<MoveEvaluated> evaluated_moves;
+        evaluated_moves.reserve(children.size());
+        for (std::unique_ptr<DecisionTreeNode>& child : children) {
+            evaluated_moves.push_back(child.get()->return_best_move(depth - 1));
+        }
+
+        if (data.board_state.white_to_move) {
+            result.evaluation = -INFINITY;
+            for (int i = 0; i < evaluated_moves.size(); i++) {
+                if (evaluated_moves[i].evaluation > result.evaluation) {
+                    result.evaluation = evaluated_moves[i].evaluation;
+                    result.move = children[i].get()->data.board_state.previous_move;
+                }
+            }
+        }
+
+    }
 }

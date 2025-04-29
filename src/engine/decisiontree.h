@@ -37,7 +37,7 @@ public:
     void generate_en_passant_moves();
     void generate_moves();
 
-    MoveEvaluated return_best_move(uint8_t depth, Colour player);
+    MoveEvaluated return_best_move(uint8_t depth);
 
 private:
     void add_child(NodeData child_data);
