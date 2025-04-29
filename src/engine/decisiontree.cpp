@@ -59,6 +59,9 @@ void DecisionTreeNode::generate_en_passant_moves() {
     const BoardState* current_board = &data.board_state;
 
     // possible moves for en passant
+    if (!(current_board->previous_move.has_value())) {
+        return;
+    }
     const PieceInstance previous_moved_piece = current_board->get_piece(current_board->previous_move->new_position);
     const bool passant_move_valid =
         (abs(current_board->previous_move->new_position.row - current_board->previous_move->old_position.row) == 2) &&
@@ -102,7 +105,6 @@ void DecisionTreeNode::generate_moves() {
         PieceInstance* piece_instance = &data.board_state.pieces[i];
         if (piece_instance->piece->colour != (data.board_state.white_to_move ? COL_WHITE : COL_BLACK)) continue;
 
-        piece_instance->position.print();
         for (const Move& possible_move : piece_instance->generateMoves(current_board)) {
             NodeData new_data{data.board_state};
             new_data.board_state.previous_move = possible_move;
