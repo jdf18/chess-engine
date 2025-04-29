@@ -55,7 +55,7 @@ PieceInstance BoardState::get_piece(const SquarePosition position) const {
     return get_piece(position.row, position.column);
 }
 PieceInstance BoardState::get_piece(const uint8_t row, const uint8_t column) const {
-    const BitBoard square_mask = (static_cast<uint64_t>(0x1) << (row + (8 * column)));
+    const BitBoard square_mask = SquarePosition{row, column}.get_bitboard_mask();
     Colour piece_colour;
 
     if ((pieces_white & square_mask).board != 0) {
