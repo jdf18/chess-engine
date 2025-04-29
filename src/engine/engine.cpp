@@ -24,6 +24,7 @@ int main() {
 
     tree.root->generate_moves();
 
+    std::cout << std::endl;
     std::cout << tree.root->children.size() << std::endl;
     for (int i = 0; i < tree.root->children.size(); i++) {
         Move move = tree.root->children[i]->data.board_state.previous_move.value();

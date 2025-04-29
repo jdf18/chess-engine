@@ -67,7 +67,7 @@ void DecisionTreeNode::generate_moves() {
     generate_castle_moves();
     generate_en_passant_moves();
 
-    for (uint8_t i = 0; i < 31; i++) {
+    for (uint8_t i = 0; i < 32; i++) {
         PieceInstance* piece_instance = &data.board_state.pieces[i];
         piece_instance->position.print();
         for (const Move& possible_move : piece_instance->generateMoves(current_board)) {
