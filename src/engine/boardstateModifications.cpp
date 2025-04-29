@@ -192,6 +192,7 @@ bool BoardState::move_castle(const CastleType move) {
 
 bool BoardState::remove_piece(const SquarePosition position) {
     const PieceInstance* taken_piece = get_piece_ptr(position.column, position.row);
+    if (taken_piece == nullptr) return false;
     taken_piece->piece->colour = COL_NONE;
     taken_piece->piece->type = PIECE_NONE;
 
