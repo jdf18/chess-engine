@@ -9,6 +9,10 @@ void uci_start() {
             std::cout << "id name chess-engine" << std::endl;
             std::cout << "id author jdf18;mickyj0101" << std::endl;
             std::cout << "uciok" << std::endl;
+        } else if (line == "isready") {
+            std::cout << "readyok" << std::endl;
+        } else if (line == "quit") {
+            break;
         }
     }
 }
