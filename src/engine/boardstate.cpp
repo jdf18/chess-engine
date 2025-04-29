@@ -163,7 +163,7 @@ void BoardState::setup_from_fen(const FenState &fen) {
 		const FenRank rank = fen.ranks[rank_index];
 		for (uint8_t column_index = 0; column_index < 8; column_index++) {
 			const PieceColour piece = rank.pieces[column_index];
-			const SquarePosition position = {rank_index, column_index};
+			const SquarePosition position = {static_cast<uint8_t>(7-rank_index), column_index};
 
 			if (piece.piece == PIECE_NONE) continue;
 
