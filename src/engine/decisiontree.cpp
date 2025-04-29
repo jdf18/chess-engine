@@ -86,3 +86,24 @@ void DecisionTreeNode::generate_moves() {
         }
     }
 }
+
+
+//Sum up the material for a given colour.
+//Used the AlphaZero values for the pieces, rather than the typical 1-3-3-5-9 values. (from this paper: https://arxiv.org/abs/2009.04374)
+//This evaluates a bishop to be more powerful than a knight (which is usually, but not always, true).
+//It also evaluates a rook and queen to be noticaebly more powerful.
+float NodeData::material_sum(Colour col) {
+    BitBoard col_pieces = col == COL_WHITE ? board_state.pieces_white : board_state.pieces_black;
+    float result = 0;
+    result += (col_pieces & board_state.pieces_kings).count_set_bits() * 1000; // King value
+    result += (col_pieces & board_state.pieces_queens).count_set_bits() * 9.5; // Queen value
+    result += (col_pieces & board_state.pieces_rooks).count_set_bits() * 5.63; // Rook value
+    result += (col_pieces & board_state.pieces_knights).count_set_bits() * 3.05; // Knight value
+    result += (col_pieces & board_state.pieces_bishops).count_set_bits() * 3.33; // Bishop value
+    result += (col_pieces & board_state.pieces_pawns).count_set_bits() * 1; // Pawn value
+    return result;
+}
+
+float NodeData::evaluate() {
+    return material_sum(COL_WHITE) - material_sum(COL_BLACK);
+}

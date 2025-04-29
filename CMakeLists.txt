@@ -19,4 +19,4 @@ add_executable(Engine
     src/engine/boardstatePseudolegal.cpp
     src/engine/fenparser.cpp
     src/engine/decisiontree.cpp
-)
+ "src/engine/bitboard.cpp")
