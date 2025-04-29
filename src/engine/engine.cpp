@@ -10,7 +10,7 @@ int main() {
 
     FenState fen_state;
     std::string fen;
-    fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+    fen = "rnbqkbnr/pppp1pp1/8/3Pp2p/8/8/PPP1PPPP/RNBQKBNR w KQkq e6 0 3";
     // std::getline(std::cin, fen);
     fen_parser(fen, fen_state);
     BoardState fen_board_state;
