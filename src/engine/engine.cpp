@@ -1,8 +1,20 @@
 #include "decisiontree.h"
 
 #include <iostream>
+#include <bitset>
+
+#include "decisiontree.h"
+#include "fenparser.h"
 
 int main() {
+
+    FenState fen_state;
+    std::string fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+    fen_parser(fen, fen_state);
+    BoardState fen_board_state;
+    fen_board_state.setup_from_fen(fen_state);
+    fen_board_state.print();
+
     BoardState initial_board_state;
     initial_board_state.pieces[PIECE_ARRAY_WHITE_KING].piece =
         std::make_unique<Piece>(COL_WHITE, PIECE_KING);

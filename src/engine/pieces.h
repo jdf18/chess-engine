@@ -79,23 +79,4 @@ typedef struct Move {
     }
 } Move;
 
-typedef enum {
-    CASTLE_KINGSIDE,
-    CASTLE_QUEENSIDE
-} CastleSide;
-
-typedef enum {
-    CASTLE_WHITE_KINGSIDE = 0,
-    CASTLE_WHITE_QUEENSIDE = 1,
-    CASTLE_BLACK_KINGSIDE = 2,
-    CASTLE_BLACK_QUEENSIDE = 3
-} CastleType;
-
-const Move castle_moves[4] = { // indexes to match CastleType
-    Move{SquarePosition{0,4}, SquarePosition{0, 1}},
-    Move{SquarePosition{0,4}, SquarePosition{0, 6}},
-    Move{SquarePosition{7,4}, SquarePosition{7, 1}},
-    Move{SquarePosition{7,4}, SquarePosition{7, 6}},
-};
-
 #endif //PIECES_H
