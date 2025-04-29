@@ -9,7 +9,7 @@
 int main() {
     FenState fen_state;
     std::string fen;
-    fen = "rnbqkbnr/pppp1pp1/8/3Pp2p/8/8/PPP1PPPP/RNBQKBNR w KQkq e6 0 3";
+    fen = "r3k2r/8/8/8/8/8/8/R3K2R w KQkq - 0 0";
     // std::getline(std::cin, fen);
     fen_parser(fen, fen_state);
     BoardState fen_board_state;
@@ -22,6 +22,7 @@ int main() {
     tree.root = std::make_unique<DecisionTreeNode>(NodeData(fen_board_state));
 
     tree.root->generate_moves();
+    // tree.root->generate_castle_moves();
 
     std::cout << "GENERATED MOVES";
     for (int i = 0; i < tree.root->children.size(); i++) {
