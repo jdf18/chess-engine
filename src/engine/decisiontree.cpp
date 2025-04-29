@@ -69,6 +69,10 @@ void DecisionTreeNode::generate_en_passant_moves() {
 
 
 void DecisionTreeNode::generate_moves() {
+    if (processed == NODE_CHILDREN_GENERATED) return;
+    // Don't bother generating moves if the parent move was illegal
+    if (data.legality == NODE_ILLEGAL) return;
+
     const BoardState* current_board = &data.board_state;
 
     generate_castle_moves();
@@ -86,4 +90,26 @@ void DecisionTreeNode::generate_moves() {
             add_child(new_data);
         }
     }
+    processed = NODE_CHILDREN_GENERATED;
+}
+
+void DecisionTreeNode::check_legality() {
+    // Dont redo everything if weve already worked this out
+    if (data.legality != NODE_PSEUDO_LEGAL) return;
+
+    const Colour enemy_colour = (data.last_player == COL_WHITE ? COL_BLACK : COL_WHITE);
+    BitBoard enemy_attack_surface = 0;
+    enemy_attack_surface |= data.board_state.pseudo_legal_king_moves(enemy_colour);
+    // enemy_attack_surface |= data.board_state.pseudo_legal_queen_moves(enemy_colour);
+    // enemy_attack_surface |= data.board_state.pseudo_legal_rook_moves(enemy_colour);
+    // enemy_attack_surface |= data.board_state.pseudo_legal_bishop_moves(enemy_colour);
+    enemy_attack_surface |= data.board_state.pseudo_legal_knight_moves(enemy_colour);
+    enemy_attack_surface |= data.board_state.pseudo_legal_pawn_moves(enemy_colour);
+
+    if ((enemy_attack_surface & data.board_state.pieces_kings &
+        (data.last_player == COL_WHITE ? data.board_state.pieces_white : data.board_state.pieces_black)).board == 0) {
+        data.legality = NODE_LEGAL;
+    } else {
+        data.legality = NODE_ILLEGAL;
+    };
 }

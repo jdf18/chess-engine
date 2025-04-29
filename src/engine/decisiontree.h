@@ -6,18 +6,32 @@
 
 #include "boardstate.h"
 
+typedef enum {
+    NODE_PSEUDO_LEGAL,
+    NODE_LEGAL,
+    NODE_ILLEGAL
+} NodeLegality;
+
+typedef enum {
+    NODE_CHILDREN_NOT_GENERATED,
+    NODE_CHILDREN_GENERATED
+} NodeChildGenStatus;
+
 typedef struct NodeData {
     BoardState board_state;
+    NodeLegality legality = NODE_PSEUDO_LEGAL;
+    Colour last_player;
 
     NodeData(NodeData const &copy) = default;
-    explicit NodeData(BoardState const &board_state) : board_state(board_state) {};
+    explicit NodeData(BoardState const &board_state) :
+        board_state(board_state) {};
 
-    bool initialise_node(); // Returns if the move was valid or not
 } NodeData;
 
 typedef class DecisionTreeNode {
 public:
     NodeData data;
+    NodeChildGenStatus processed = NODE_CHILDREN_NOT_GENERATED;
     std::vector<std::unique_ptr<DecisionTreeNode>> children;
 
     DecisionTreeNode(const DecisionTreeNode& copy)
@@ -32,6 +46,7 @@ public:
     void generate_castle_moves();
     void generate_en_passant_moves();
     void generate_moves();
+    void check_legality();
 
 private:
     void add_child(NodeData child_data);
