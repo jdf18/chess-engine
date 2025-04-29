@@ -141,6 +141,7 @@ struct BoardState {
     bool move_piece(SquarePosition start_position, SquarePosition end_position);
     bool move_castle(CastleType move);
     bool remove_piece(const SquarePosition position);
+    void switch_turn();
 
     void print();
     std::string get_fen();
@@ -158,7 +159,7 @@ struct BoardState {
         white_to_move(copy.white_to_move),
         previous_move(copy.previous_move)
     {
-        for (int i = 0; i < 31; i++) {
+        for (int i = 0; i < 32; i++) {
             pieces[i].piece = std::make_unique<Piece>(copy.pieces[i].piece->colour, copy.pieces[i].piece->type);
             pieces[i].position = copy.pieces[i].position;
         }

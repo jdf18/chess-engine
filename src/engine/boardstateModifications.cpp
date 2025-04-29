@@ -27,10 +27,10 @@ bool BoardState::is_move_castle_valid(const Move& move) const {
     if (moving_colour == COL_BLACK) mask = mask << BOARD_ROW*7;
     if (((pieces_white | pieces_black) & mask).board != 0) return false;
 
-    if (moving_colour == COL_WHITE) {
+    if (moving_colour == COL_WHITE && white_to_move) {
         if (castling_state.white_kingside  && (delta == CASTLE_KINGSIDE_COL_DELTA))  return true;
         if (castling_state.white_queenside && (delta == CASTLE_QUEENSIDE_COL_DELTA)) return true;
-    } else if (moving_colour == COL_BLACK) {
+    } else if (moving_colour == COL_BLACK && !white_to_move) {
         if (castling_state.black_kingside  && (delta == CASTLE_KINGSIDE_COL_DELTA))  return true;
         if (castling_state.black_queenside && (delta == CASTLE_QUEENSIDE_COL_DELTA)) return true;
     }
@@ -227,4 +227,8 @@ bool BoardState::remove_piece(const SquarePosition position) {
     pieces_pawns   &= ~mask;
 
     return true;
+}
+
+void BoardState::switch_turn() {
+    white_to_move = !white_to_move;
 }
