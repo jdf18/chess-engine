@@ -72,11 +72,18 @@ typedef struct Move {
     Move(const SquarePosition from, const SquarePosition to, Pieces promotion) :
         old_position(from), new_position(to), piece_promotion(promotion) {};
 
+    Move() : old_position(SquarePosition(255, 255)), new_position(SquarePosition(255, 255)) {};
+
     void print() {
         old_position.print();
         std::cout << " -> ";
         new_position.print();
     }
 } Move;
+
+struct MoveEvaluated {
+    std::optional<Move> move;
+    int evaluation;
+};
 
 #endif //PIECES_H

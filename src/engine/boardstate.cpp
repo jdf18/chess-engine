@@ -1,8 +1,8 @@
 #include "boardstate.h"
 
 void BoardState::print() {
-	for (uint8_t column = 0; column < 8; column++) {
-		for (uint8_t row = 0; row < 8; row++) {
+	for (uint8_t row = 7; row < 8; row--) {
+		for (uint8_t column = 0; column < 8; column++) {
 			const PieceInstance piece_instance = get_piece(row, column);
 			char piece_character = ' ';
 			switch (piece_instance.piece->type) {
@@ -163,7 +163,7 @@ void BoardState::setup_from_fen(const FenState &fen) {
 		const FenRank rank = fen.ranks[rank_index];
 		for (uint8_t column_index = 0; column_index < 8; column_index++) {
 			const PieceColour piece = rank.pieces[column_index];
-			const SquarePosition position = {rank_index, column_index};
+			const SquarePosition position = {static_cast<uint8_t>(7-rank_index), column_index};
 
 			if (piece.piece == PIECE_NONE) continue;
 
@@ -188,4 +188,10 @@ void BoardState::setup_from_fen(const FenState &fen) {
 			piece_index++;
 		}
 	}
+
+	white_to_move = fen.is_white_to_move;
+	castling_state = fen.castling;
+	previous_move = fen.previous_move;
+
+	//todo: fullmove and halfmove
 }
