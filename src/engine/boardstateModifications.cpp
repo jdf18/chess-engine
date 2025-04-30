@@ -103,8 +103,6 @@ bool BoardState::move_piece(const SquarePosition start_position, const SquarePos
     // move the piece to the new position
     moving_piece->position = end_position;
 
-    // todo: pawn promotion - check if pawn new position on final rank and modify moves
-
     // Change the positions of the pieces in the bitboards
     const BitBoard move_mask = (start_position.get_bitboard_mask() | end_position.get_bitboard_mask());
     if (moving_piece->piece->colour == COL_WHITE) {
@@ -214,4 +212,22 @@ bool BoardState::remove_piece(const SquarePosition position) {
 
 void BoardState::switch_turn() {
     white_to_move = !white_to_move;
+}
+
+
+void BoardState::promote_piece(const SquarePosition position, const Pieces type) {
+    const BitBoard mask = position.get_bitboard_mask();
+    pieces_pawns &= ~mask;
+
+    switch (type) {
+        case PIECE_KING: pieces_kings |= mask; break;
+        case PIECE_QUEEN: pieces_queens |= mask; break;
+        case PIECE_ROOK: pieces_rooks |= mask; break;
+        case PIECE_BISHOP: pieces_bishops |= mask; break;
+        case PIECE_KNIGHT: pieces_knights |= mask; break;
+        case PIECE_PAWN: pieces_pawns |= mask; break;
+        default: break;
+    }
+
+    return;
 }
