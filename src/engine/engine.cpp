@@ -9,7 +9,7 @@
 int main() {
     FenState fen_state;
     std::string fen;
-    fen = "8/5k2/8/8/1q6/8/K7/8 w - - 0 1";
+    fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
     // std::getline(std::cin, fen);
     fen_parser(fen, fen_state);
     BoardState fen_board_state;
@@ -28,7 +28,8 @@ int main() {
         move.move.value().print();
     }
 
-
-
+    int x;
+    std::cin >> x;
+    std::cout << x;
     return 0;
 }
