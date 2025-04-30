@@ -83,7 +83,10 @@ typedef struct Move {
 
 struct MoveEvaluated {
     std::optional<Move> move;
-    int evaluation;
+    float evaluation;
+    bool lost_white_king = false;
+    bool lost_black_king = false;
+    bool mate = false;
 };
 
 #endif //PIECES_H
