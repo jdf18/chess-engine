@@ -80,6 +80,7 @@ void DecisionTreeNode::generate_en_passant_moves() {
 
         for (const Move& possible_move : possible_moves) {
             if (possible_move.old_position.column > 7) continue;
+            if ((possible_move.new_position.get_bitboard_mask() & (current_board->pieces_white | current_board->pieces_black)) == 0) continue;
             NodeData new_data{data.board_state};
             new_data.board_state.previous_move = possible_move;
             new_data.board_state.switch_turn();
