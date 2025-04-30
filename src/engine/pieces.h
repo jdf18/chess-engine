@@ -3,6 +3,7 @@
 
 #include <optional>
 #include <bit>
+#include <utility>
 #include "bitboard.h"
 
 typedef enum {
@@ -82,8 +83,14 @@ typedef struct Move {
 } Move;
 
 struct MoveEvaluated {
+    bool legal;
     std::optional<Move> move;
     int evaluation;
+
+    MoveEvaluated(std::optional<Move> move, int evaluation)
+    : legal(true), move(std::move(move)), evaluation(evaluation) {};
+
+    MoveEvaluated() : legal(false), move(std::nullopt), evaluation(0) {};
 };
 
 #endif //PIECES_H

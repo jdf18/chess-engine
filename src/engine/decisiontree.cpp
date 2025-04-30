@@ -189,7 +189,15 @@ MoveEvaluated DecisionTreeNode::return_best_move(uint8_t depth) {
 
         //For each possible move, store the best move for the OTHER colour in the position reached if we make the move.
         for (std::unique_ptr<DecisionTreeNode>& child : children) {
-            evaluated_moves.push_back(child.get()->return_best_move(depth - 1));
+            child->check_legality();
+            child->data.board_state.previous_move->print();
+            std::cout << std::endl;
+            std::cout << child->data.legality << std::endl << std::endl;
+            if (child->data.legality != NODE_LEGAL) {
+                evaluated_moves.push_back(MoveEvaluated{});
+            } else {
+                evaluated_moves.push_back(child->return_best_move(depth - 1));
+            }
         }
 
         //If it is white's turn to move, choose the move which gives the maximum evaluation
@@ -198,6 +206,7 @@ MoveEvaluated DecisionTreeNode::return_best_move(uint8_t depth) {
             result.evaluation = -2000;
             //For every move, if its evaluation is greater than the current result's evaluation, choose it over the current result
             for (int i = 0; i < evaluated_moves.size(); i++) {
+                if (!evaluated_moves[i].legal) continue;
                 if (evaluated_moves[i].evaluation > result.evaluation) {
                     result.evaluation = evaluated_moves[i].evaluation;
                     result.move = children[i].get()->data.board_state.previous_move;
@@ -207,6 +216,7 @@ MoveEvaluated DecisionTreeNode::return_best_move(uint8_t depth) {
         }
         result.evaluation = 2000;
         for (int i = 0; i < evaluated_moves.size(); i++) {
+            if (!evaluated_moves[i].legal) continue;
             if (evaluated_moves[i].evaluation < result.evaluation) {
                 result.evaluation = evaluated_moves[i].evaluation;
                 result.move = children[i].get()->data.board_state.previous_move;

@@ -19,7 +19,7 @@ int main() {
     std::cout << std::endl;
     DecisionTree tree;
     tree.root = std::make_unique<DecisionTreeNode>(NodeData(fen_board_state));
-    MoveEvaluated move = tree.root.get()->return_best_move(5);
+    MoveEvaluated move = tree.root.get()->return_best_move(3);
     move.move.value().print();
 
     return 0;
