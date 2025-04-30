@@ -79,11 +79,13 @@ void DecisionTreeNode::generate_en_passant_moves() {
         };
 
         for (const Move& possible_move : possible_moves) {
+            if (possible_move.old_position.column > 7) continue;
             NodeData new_data{data.board_state};
             new_data.board_state.previous_move = possible_move;
             new_data.board_state.switch_turn();
 
             PieceInstance moving_piece = data.board_state.get_piece(possible_move.old_position);
+            if (moving_piece.piece->colour == COL_NONE) continue;
             if (moving_piece.piece->colour != (data.board_state.white_to_move ? COL_WHITE : COL_BLACK)) continue;
 
             new_data.board_state.move_piece(possible_move.old_position, possible_move.new_position);
@@ -151,6 +153,19 @@ float NodeData::evaluate() {
 //*Should* return the best move for the colour whose turn it is for this node.
 MoveEvaluated DecisionTreeNode::return_best_move(uint8_t depth) {
     MoveEvaluated result;
+    result.lost_white_king = false;
+    result.lost_black_king = false;
+    //If there is no king in the current state, set result.lost_king to true.
+    if (data.board_state.white_to_move) {
+        if ((data.board_state.pieces_kings & data.board_state.pieces_white) == 0) {
+            result.lost_white_king = true;
+        }
+    }
+    else {
+        if ((data.board_state.pieces_kings & data.board_state.pieces_black) == 0) {
+            result.lost_black_king = true;
+        }
+    }
     //Base case
     if (depth == 0) {
         result.evaluation = data.evaluate();
@@ -159,34 +174,81 @@ MoveEvaluated DecisionTreeNode::return_best_move(uint8_t depth) {
 
     //If not the base case
     else {
-        //Get all possible moves in this position
-        generate_moves();
+
+        //This may have already been called at a depth of 1, so don't get children again if we already have them.
+        if (children.size() == 0) {
+            //Get all possible moves in this position
+            generate_moves();
+        }
+
+        //Check which of the moves are actually valid, but only if the depth is greater than 1 (otherwise we get a stack overflow)
+        std::vector<int> valid_indices;
+        if (depth > 1) {
+            std::vector<MoveEvaluated> next_moves;
+            next_moves.reserve(children.size());
+
+            for (std::unique_ptr<DecisionTreeNode>& child : children) {
+                next_moves.push_back(child.get()->return_best_move(1));
+            }
+
+            valid_indices.reserve(children.size());
+            for (int i = 0; i < next_moves.size(); i++) {
+                MoveEvaluated move = next_moves[i];
+                if (!(data.board_state.white_to_move ? move.lost_white_king : move.lost_black_king)) {
+                    valid_indices.push_back(i);
+                }
+            }
+        }
+        else {
+            valid_indices.reserve(children.size());
+            for (int i = 0; i < children.size(); i++) {
+                valid_indices.push_back(i);
+            }
+        }
+
+        if (valid_indices.size() == 0) {
+            result.mate = true;
+            result.evaluation = data.board_state.white_to_move ? -2000 : 2000;
+            (data.board_state.white_to_move ? result.lost_white_king : result.lost_black_king) = true;
+            return result;
+        }
+
         std::vector<MoveEvaluated> evaluated_moves;
-        evaluated_moves.reserve(children.size());
+        evaluated_moves.reserve(valid_indices.size());
 
         //For each possible move, store the best move for the OTHER colour in the position reached if we make the move.
-        for (std::unique_ptr<DecisionTreeNode>& child : children) {
+        for (int i : valid_indices) {
+            std::unique_ptr<DecisionTreeNode>& child = children[i];
             evaluated_moves.push_back(child.get()->return_best_move(depth - 1));
+            if (data.board_state.white_to_move ? evaluated_moves.back().lost_black_king : evaluated_moves.back().lost_white_king) {
+                break;
+            }
         }
 
         //If it is white's turn to move, choose the move which gives the maximum evaluation
         if (data.board_state.white_to_move) {
             //Initialise the evaluation to negative infinity, so anything is better than it
-            result.evaluation = -INFINITY;
+            result.evaluation = -3000;
             //For every move, if its evaluation is greater than the current result's evaluation, choose it over the current result
             for (int i = 0; i < evaluated_moves.size(); i++) {
                 if (evaluated_moves[i].evaluation > result.evaluation) {
                     result.evaluation = evaluated_moves[i].evaluation;
                     result.move = children[i].get()->data.board_state.previous_move;
+                    result.lost_white_king = evaluated_moves[i].lost_white_king;
+                    result.lost_black_king = evaluated_moves[i].lost_black_king;
+                    result.mate = evaluated_moves[i].mate;
                 }
             }
             return result;
         }
-        result.evaluation = INFINITY;
+        result.evaluation = 3000;
         for (int i = 0; i < evaluated_moves.size(); i++) {
             if (evaluated_moves[i].evaluation < result.evaluation) {
                 result.evaluation = evaluated_moves[i].evaluation;
                 result.move = children[i].get()->data.board_state.previous_move;
+                result.lost_white_king = evaluated_moves[i].lost_white_king;
+                result.lost_black_king = evaluated_moves[i].lost_black_king;
+                result.mate = evaluated_moves[i].mate;
             }
         }
         return result;

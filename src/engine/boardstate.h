@@ -92,7 +92,7 @@ class PieceInstance;
 struct FenState;
 
 struct BoardState {
-    PieceInstance pieces[36];
+    PieceInstance pieces[32];
 
     BitBoard pieces_white;
     BitBoard pieces_black;
